@@ -1,210 +1,200 @@
-# Xflash Laptop Diagnostics (Laptop Buyer Kit v3.0)
+# Xflash — Check Before You Pay
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/PixelApprentice/laptop-buyer-kit/master/examples/banner.svg" alt="Xflash Laptop Diagnostics Banner" width="100%" onerror="this.style.display='none'"/>
+  <strong>The offline-first hardware diagnostics, discrepancy detector, and used-laptop buyer assurance platform.</strong>
 </p>
 
 <p align="center">
-  <strong>Xflash: Check before you pay. The offline-first hardware diagnostics and buyer assurance platform.</strong>
-</p>
-
-<p align="center">
-  <a href="https://github.com/PixelApprentice/laptop-buyer-kit/actions"><img src="https://img.shields.io/badge/tests-71%20passed-success?style=flat-square" alt="Tests"></a>
-  <a href="https://github.com/PixelApprentice/laptop-buyer-kit/releases"><img src="https://img.shields.io/badge/version-3.0.0-blue?style=flat-square" alt="Version"></a>
+  <a href="https://github.com/PixelApprentice/xflash/actions"><img src="https://img.shields.io/badge/tests-71%20passed-success?style=flat-square" alt="Tests"></a>
+  <a href="https://github.com/PixelApprentice/xflash/releases"><img src="https://img.shields.io/badge/version-3.0.0-blue?style=flat-square" alt="Version"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="License"></a>
   <a href="https://python.org"><img src="https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue?style=flat-square" alt="Python"></a>
-  <a href="#zero-trust-offline-architecture"><img src="https://img.shields.io/badge/telemetry-0%25%20(100%25%20offline)-orange?style=flat-square" alt="Offline"></a>
-  <a href="#playwright-e2e-testing"><img src="https://img.shields.io/badge/playwright-E2E%20verified-purple?style=flat-square" alt="Playwright"></a>
+  <a href="#-zero-trust-offline-architecture"><img src="https://img.shields.io/badge/telemetry-0%25%20(100%25%20offline)-orange?style=flat-square" alt="Offline"></a>
+  <a href="#-automated-testing--qa"><img src="https://img.shields.io/badge/playwright-E2E%20verified-purple?style=flat-square" alt="Playwright"></a>
 </p>
 
 ---
 
-## 💡 Why Aegis Laptop Diagnostics?
+## 💡 Why Xflash?
 
-Buying a used, refurbished, or marketplace laptop carries significant risk. Sellers often quote advertised specs while hiding degraded batteries, counterfeit drives, overheating components, or intermittent keyboards and trackpads.
+Buying a used, refurbished, or marketplace laptop carries real financial risk. Sellers routinely quote original advertised specifications while concealing heavily degraded batteries, worn NVMe SSDs with media errors, unadvertised RAM downgrades, failing thermal dissipation, or intermittent keyboard and trackpad switches.
 
-Most diagnostic tools suffer from critical drawbacks:
-- **Cloud-dependent:** Require internet access, risk leaking device identifiers, or upload reports to third-party databases.
-- **Deceptive precision:** Aggregate complex hardware states into an arbitrary "95% Health" number that conceals critical disk or battery faults.
-- **Aggressive accusations:** Flag legitimate replacement parts or firmware quirks as "fraud" without presenting verifiable evidence.
-- **Missing coverage transparency:** Assume that if a sensor didn't report an alarm, the hardware passed.
+Most existing diagnostic tools suffer from four critical flaws:
+1. **Cloud Dependency:** Require internet connectivity, upload hardware serial numbers to remote servers, or download third-party web plugins on a laptop you don't yet own.
+2. **Deceptive Single Scores:** Aggregate complex hardware states into an arbitrary "95% Health" badge that hides failing storage sectors or counterfeit parts.
+3. **Walls of Numbers:** Traditional tools (HWiNFO, CPU-Z, AIDA64) present dense tables of raw numbers with zero actionable context for a buyer standing across a table from a seller.
+4. **Destructive or Invasive Testing:** Run unapproved write benchmarks, partition modifications, or aggressive stress tests that can destabilize or damage hardware during an inspection.
 
-**Aegis (Laptop Buyer Kit v2.1)** is built from the ground up to solve these problems. It is **100% offline**, **read-only**, **evidence-backed**, and features a modern cybernetic interface with **Normal Mode** for casual buyers and **Expert Mode** for deep technical diagnostics.
+**Xflash** is built from the ground up as the **honest second opinion for any used laptop**. It runs **100% offline**, operates from a **zero-trace USB stick**, executes strictly **read-only non-destructive tests**, and presents findings through a **Workshop-Bench interface** designed for buyers.
 
 ---
 
-## 🚀 Key Features in Version 2.1
+## ⚡ The Workshop-Bench Architecture (v3.0)
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
-│                   AEGIS LAPTOP DIAGNOSTICS v2.1.0                      │
+│                      XFLASH DIAGNOSTICS v3.0                           │
+│                     "Check before you pay"                             │
 │                                                                        │
-│   [1. OS & Clean-Wipe Detection]   [2. Display Panel & EDID Parsing]   │
-│   • UEFI vs BIOS/MBR boot type     • OLED/AMOLED vs IPS/TN panel type  │
-│   • GPT partition table & root fs  • Color depth (10-bit HDR) & size   │
-│   • CPU arch (x86_64/ARM/32/64)    • Touchscreen hardware detection    │
-│   • Resale clean-wipe detection    • Contrast ramp & UFO Hz benchmark  │
+│   [Normal Mode: Buyer Lenses]       [Advanced Mode: Hardware Lab]      │
+│   • Verdict first in plain English  • High-density register telemetry  │
+│   • 3-part finding explanations     • Raw SMART / NVMe hex decodes     │
+│   • Answered buyer questions        • ACPI thermal rise velocity       │
 │                                                                        │
-│   [3. Input Stress & Weakpoints]   [4. Cooling & Fan Profiles]         │
-│   • Trackpad 9-zone sensitivity map• ACPI profile: Whisper vs Max Speed│
-│   • Real-time pointer pressure API • Live fan RPM monitoring (hwmon)   │
-│   • Switch chatter & bounce (<35ms)• 5s bounded thermal dissipation    │
-│   • Keyboard condition heatmap     • Throttle velocity & delta rise    │
+│   [Interactive Schematic]           [Command Palette & Tools]          │
+│   • Motherboard SVG component map   • Ctrl+K rapid keyboard navigation │
+│   • Live health coloring per zone   • Screen Studio (EDID, UFO Hz)     │
+│   • Deep links to raw telemetry     • Keyboard chatter & 9-zone pad    │
 │                                                                        │
-│   [5. Ports & Connectors Station]  [6. USB Portable / Autorun Mode]    │
-│   • USB-A / Type-C speed & vendor  • Windows autorun.inf & batch run   │
-│   • HDMI & DisplayPort outputs     • UAC elevation manifest (.manifest)│
-│   • AC adapter charging detection  • 100% offline SQLite & HTML export │
+│   [Seller Listing Verification]     [USB Zero-Trace & Print Cert]      │
+│   • Opt-in claim comparison matrix  • Direct-to-USB report persistence │
+│   • Offline marketplace URL memo    • Print-to-PDF buyer certificate   │
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
-### 1. ⚡ OS, Boot Architecture & Resale Clean-Wipe Detection
-- **Boot & Architecture:** Detects UEFI vs. legacy BIOS/MBR, CPU architecture (x86_64, aarch64, i686) and 32-bit vs. 64-bit operating mode.
-- **Storage Partition Table & Filesystem:** Queries block devices for GPT vs. MBR partition table schemes and primary root filesystem types (ext4, btrfs, NTFS, exFAT).
-- **Clean OS Reinstall vs. Storage Runtime Discrepancy:** Inspects operating system installation timestamps (pacman.log, Debian/Ubuntu installer logs, `/etc/machine-id`) and reconciles against storage power-on hours to detect when a heavily used laptop was wiped right before being listed on the used marketplace.
+### 1. Dual Execution Modes: Simple vs. Advanced
+- **Normal Mode (Verdict First):** Built around questions buyers actually ask (*"How healthy is the battery?", "Is the storage reliable?", "Why is it thermal throttling?"*). Every identified issue is formatted as a 3-part finding card:
+  1. **What's Wrong:** Plain-language statement of the anomaly.
+  2. **Why It Matters (Buyer Leverage):** Concrete impact on battery life, performance, or negotiation value.
+  3. **Recommended Action:** Specific next steps, tests, or price adjustment advice.
+- **Advanced Mode (DevTools Depth):** Unlocks full sensor tables, raw ATA/NVMe registers, CPU core topology, power state curves, and JSON telemetry export. Every Normal Mode finding features a **`[View Raw Register Telemetry ↗]`** deep-link directly into the matching Advanced view.
 
-### 2. 🖥️ Display Panel EDID Parsing & Touchscreen Detection
-- **Panel Technology Identification:** Direct binary EDID parser decoding manufacturer (Samsung Display, BOE, LG Display, AUO, Sharp), panel model, diagonal inches, and pixel color depth (6-bit, 8-bit, 10-bit).
-- **OLED vs. IPS vs. TN:** Automatically identifies self-emitting OLED/AMOLED panels vs. wide-angle IPS vs. budget TN displays.
-- **Touchscreen Sensor:** Verifies presence of capacitive or active digitizer touchscreen controllers.
-- **Screen Studio:** 16-step grayscale contrast ramp, 1px subpixel checkerboard test, and a live UFO motion blur animation that measures exact browser compositor refresh rates (Hz) and frame times.
+### 2. Interactive Laptop Hardware Schematic
+A responsive SVG motherboard schematic provides an exploded view of key laptop subsystems:
+- **Display & Webcam:** Resolution, panel technology, and camera link status.
+- **Chassis & Hinges:** Hinge structural wobble notes and physical alignment.
+- **Keyboard & Trackpad:** Switch bounce rates, chatter alerts, and pressure mapping.
+- **CPU & Cooling:** Core topology, thermal zones, fan RPM, and ACPI profile.
+- **NVMe Storage & RAM:** Wear percentage, media errors, and capacity verification.
+- **Battery:** Design vs. actual capacity, cycle count, and wear degradation.
+- **Ports (Left & Right):** USB speed negotiation (2.0 / 3.0 / 3.2), HDMI, and charging input.
 
-### 3. 🖱️ Trackpad Weakpoints & Keyboard Switch Chatter Detection
-- **9-Zone Sensitivity Matrix:** Real-time 3x3 tracking grid (Top-Left, Center, Bottom-Right, etc.) showing hit counts across the trackpad to identify dead spots, unresponsive edges, or sticky click corners.
-- **Pointer Pressure API:** Scales contact radius and displays real-time pointer pressure (0%–100%) on force-sensitive touchpads.
-- **Switch Chatter & Bounce Detection:** Monitors key press intervals down to millisecond precision; flags contact bounce (<35ms) and switch wobble to identify physically worn or failing key switches.
-- **Condition Heatmap:** Color-codes every key switch on the laptop keyboard (Cold, Warm, Verified, Chatter Alert).
+### 3. Command Palette (`Ctrl+K` / `Cmd+K` / `Alt+E`)
+Keyboard-first navigation inspired by Raycast and Linear. Quickly trigger actions without leaving the keyboard:
+- `Auto-Detect Host Hardware`
+- `Load Reference Inspection Sample`
+- `Switch to Normal / Advanced View`
+- `Open Screen Studio / Keyboard Tester / Fan Acoustics`
+- `Print Inspection Certificate (PDF)`
+- `Save Zero-Trace Report to USB`
 
-### 4. 🌀 ACPI Fan Acoustics & Performance vs. Whisper Mode
-- **ACPI Platform Cooling Profiles:** Toggle vendor firmware profiles directly from the dashboard:
-  - `🚀 Performance Mode`: Spins fans to maximum speed and raises thermal limits to test peak cooling and airflow.
-  - `🤫 Whisper Mode`: Keeps fans in silent low-RPM operation to verify bearing noise and quiet dissipation.
-  - `⚖️ Balanced Mode`: Restores standard factory thermal policy.
-- **Live Fan RPM Monitor:** Non-destructive read-only hwmon sysfs monitoring displaying current fan rotation speeds in real time.
-- **5-Second Bounded Thermal Pulse:** Non-destructive math calculation measuring starting idle temp, peak temp, rise delta, and ramp velocity (°C/s).
+### 4. Opt-in Seller Listing Claims
+Never falsely accuse a seller when claims aren't provided. The claims verification panel is an intentional, collapsible drawer where you can enter the seller's advertised specs (RAM, Storage, CPU, Model, Price, and Listing URL). Xflash automatically reconciles advertised specs against observed hardware registers.
 
-### 5. 🔌 Physical Ports & Connectors Hardware Station
-- **Live USB Verification:** Plug a USB drive or peripheral into any chassis port to immediately see speed classification (USB 2.0 480M, USB 3.0 5G, USB 3.2 10G) and removable flag.
-- **External Video Connectors:** Validates HDMI and DisplayPort output interfaces and modes.
-- **AC Charging Port:** Real-time confirmation of AC power delivery and battery charge status.
-
-### 6. 💽 USB Bootable & Portable Mode (Windows + Linux)
-- Includes `autorun.inf`, `start-aegis.bat`, and `start-aegis.manifest` for plug-and-play USB operation.
-- Requests standard UAC administrator elevation so Aegis can access SMART registers and ACPI telemetry without false-positive virus flags (clean open-source script, zero obfuscation, zero telemetry).
+### 5. Print-to-PDF Buyer Certificate
+A high-contrast, professional one-sheet inspection certificate (`@media print` optimized) ready to hand to a seller during purchase negotiations, complete with a local SHA-256 session integrity seal.
 
 ---
 
-## 🏛 Architecture & Data Flow
+## 🛠 Complete Interactive Hardware Testing Station
 
-```mermaid
-flowchart TD
-    subgraph Input ["1. Inputs & Hardware Telemetry"]
-        A[Seller Listing Claims<br/>RAM, Storage, Model] --> E[Session Orchestrator]
-        B[Linux sysfs /proc<br/>Battery, Memory, CPU, DRM] --> E
-        C[Storage Controllers<br/>smartctl / NVMe logs] --> E
-        D[Interactive Tools & Checklist<br/>Keyboard, Screen, Audio, Cam] --> E
-    end
+| Subsystem | Diagnostic Capabilities |
+| :--- | :--- |
+| **Display Panel & EDID** | Direct binary EDID parser decoding manufacturer (Samsung, BOE, LG, Sharp), panel type (**OLED/AMOLED vs. IPS vs. TN**), 10-bit HDR color depth, 16-step grayscale contrast ramp, 1px subpixel checkerboard, and live **UFO compositor refresh rate benchmark** (Hz & frame time). |
+| **Trackpad & Input** | **9-zone sensitivity matrix** (3x3 grid) detecting unresponsive edges or sticky corners, and real-time **Pointer Pressure API** measuring contact force (0%–100%). |
+| **Keyboard Switch Chatter** | Millisecond key-press bounce detection. Flags switch chatter and contact bounce (**<35ms**) to identify worn mechanical or membrane switches, mapped to a visual keyboard condition heatmap. |
+| **Cooling & Fan Acoustics** | ACPI platform profiles (**Performance Mode** vs. **Whisper Mode** vs. **Balanced**), live hwmon fan RPM monitoring, and a non-destructive 5-second thermal dissipation pulse measuring rise delta and ramp velocity (°C/s). |
+| **Physical Ports** | Live USB peripheral verification showing negotiated speed (**USB 2.0 480M**, **USB 3.0 5G**, **USB 3.2 10G**), HDMI/DisplayPort display outputs, and AC power delivery. |
+| **OS & Clean-Wipe** | Boot mode (UEFI vs. legacy BIOS/MBR), GPT vs. MBR partitioning, filesystem types, and **clean-wipe discrepancy detection** reconciling OS install logs against disk power-on hours. |
 
-    subgraph Processing ["2. Normalization & Pure Analysis"]
-        E --> F[Normalized Snapshot]
-        F --> G[Deterministic Rule Engine<br/>battery · storage · memory · cpu]
-        G --> H[Findings with Provenance]
-        G --> I[Per-Test Coverage Matrix<br/>passed · warning · high · critical]
-    end
+---
 
-    subgraph Persistence ["3. Persistence & Output"]
-        H --> J[(SQLite Database<br/>Offline & Private)]
-        I --> J
-        J --> K[Interactive Web Dashboard<br/>Normal & Expert Views]
-        J --> L[Local HTML / JSON Reports]
-        J --> M[Print / PDF Output]
-    end
+## 💽 Zero-Trace USB Portable Mode (Windows + Linux)
+
+Carry Xflash on any standard USB drive and inspect laptops anywhere without installing software or leaving traces:
+
+```
+USB_DRIVE/
+├── xflash/                  # Xflash source engine
+├── autorun.inf              # Windows AutoPlay launcher
+├── start-xflash.bat         # Windows one-click USB launcher
+├── start-aegis.bat          # Legacy Windows launcher compatibility
+├── run-portable.sh          # Linux executable USB launcher
+├── aegis_data/              # Local SQLite database (saved to USB)
+└── aegis_reports/           # Generated HTML & PDF certificates (saved to USB)
 ```
 
+- **Windows:** Plug in USB and double-click `start-xflash.bat`. Automatically sets local environment and opens the dashboard at `http://127.0.0.1:8080`.
+- **Linux:** Plug in USB and run `./run-portable.sh`.
+- **Zero Host Trace:** All SQLite databases, session records, and exported inspection certificates are stored on the USB stick. Nothing is written to the host laptop's internal disk.
+
 ---
 
-## 📦 Installation
+## 📦 Installation & Quickstart
 
-Aegis Laptop Diagnostics requires **Python 3.10+**. The core analysis engine, SQLite persistence layer, and local web dashboard use **zero external runtime dependencies**.
+Xflash requires **Python 3.10+**. The core analysis engine, SQLite persistence layer, and local web dashboard use **zero external runtime dependencies**.
 
 ```bash
-# Clone the repository
-git clone https://github.com/PixelApprentice/laptop-buyer-kit.git
-cd laptop-buyer-kit
+# 1. Clone the repository
+git clone https://github.com/PixelApprentice/xflash.git
+cd xflash
 
-# Create and activate virtual environment
+# 2. Create and activate a virtual environment
 python3 -m venv .venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\Activate.ps1
 
-# Install in editable mode
+# 3. Install in editable mode
 pip install -e .
 ```
 
----
-
-## 🖥 Quickstart & Usage
-
-### 1. Launch the Interactive Local Dashboard (Recommended)
-
-Start the local web dashboard with a single command:
-
+### 1. Launch the Interactive Dashboard
 ```bash
-laptop-inspector serve --port 8080
+# Start local server and open browser
+xflash serve --port 8080
+
+# Or run directly via python module
+python3 -m laptop_inspector.cli serve --port 8080
 ```
+Open **`http://127.0.0.1:8080`**:
+- Press **`Ctrl+K`** to open the Command Palette.
+- Click **⚡ Auto-Detect Specs** to probe the laptop hardware.
+- Click **Run Full Hardware Diagnostic** or **Load Reference Sample**.
+- Review findings in **Normal Mode** or switch to **Advanced Mode** for register telemetry.
+- Click **Print / PDF Certificate** to generate an inspection certificate.
 
-Open your browser to **`http://127.0.0.1:8080`**:
-1. Click **⚡ Auto-Detect Specs** to probe the laptop hardware automatically, or enter seller claims manually.
-2. Click **Run Full Hardware Diagnostic** (on Linux) or click **Load Reference Sample** to preview.
-3. Switch between **Normal** and **Expert** modes using the top-right toggle.
-4. Visit the **Interactive Tools** tab to test screen pixels, audio frequencies, camera/mic, trackpad, and keyboard.
-5. Review the **Verdict**, **Findings Cards**, and **Listing Claim Comparison Matrix**.
-6. Click **Download HTML Report** to save an offline report for purchase negotiations.
-
-### 2. Command-Line Analysis of Snapshot JSON
-
-You can also run offline analysis directly in the terminal:
-
+### 2. Command-Line Analysis
+Run headless inspection directly from the terminal:
 ```bash
-# Output formatted JSON analysis to stdout:
-laptop-inspector examples/sample_session.json --format json
+# Formatted JSON output to stdout:
+xflash examples/sample_session.json --format json
 
-# Generate an offline HTML report:
-laptop-inspector examples/sample_session.json --format html --output report.html
+# Export standalone HTML report:
+xflash examples/sample_session.json --format html --output report.html
 ```
 
 ---
 
 ## 🔒 Zero-Trust Offline Architecture
 
-| Property | Guarantee |
-|---|---|
-| **Network Calls** | **Zero.** The server binds to `127.0.0.1`. No external APIs, CDNs, or telemetry are queried. |
-| **Data Privacy** | Hardware serial numbers, MAC addresses, and UUIDs are redacted from shareable reports. |
-| **Drive Safety** | 100% read-only. No write passes, partition modifications, or destructive erase tools are ever called. |
-| **Missing Data Policy** | Missing data is recorded as `inconclusive` or `skipped`—never silently reported as `pass`. |
+| Guarantee | Policy |
+| :--- | :--- |
+| **Zero Network Calls** | The server binds strictly to `127.0.0.1`. All CSS, SVGs, and GSAP animations are bundled offline. No external fonts, analytics, or CDNs are ever accessed. |
+| **Strict Privacy** | Serial numbers, MAC addresses, hostnames, and UUIDs are redacted from shareable reports. |
+| **Non-Destructive** | 100% read-only hardware inspection. No disk write tests, partition modifications, firmware writes, or destructive erasing. |
+| **Transparent Uncertainty** | Missing or unreadable telemetry is marked `inconclusive` or `skipped`. Missing data is never silently falsified as `pass` or healthy. |
 
 ---
 
 ## 🧪 Automated Testing & QA
 
-Aegis Laptop Diagnostics maintains an automated test suite including unit tests and Playwright browser integration tests:
+Xflash maintains a strict test suite covering edge cases, invalid telemetry, and browser workflows:
 
 ```bash
 # Install test dependencies (Playwright)
 pip install -e ".[test]"
 playwright install chromium
 
-# Run all 52 unit and Playwright integration tests:
-python -m unittest discover -s tests -v
+# Run all 71 unit and E2E browser tests:
+.venv/bin/python -m unittest discover -s tests -v
 ```
 
-### Test Coverage Highlights:
-- **`BatteryTests`:** Degradation boundaries, low-cycle discrepancies, zero full capacity (`critical`), negative/implausible cycles, above-design thresholds.
-- **`StorageTests`:** Low-wear media errors, NVMe critical warning bitmask decoding, invalid negative counters, decimal GB vs. GiB storage matching.
-- **`MemoryTests`:** Material RAM shortfalls, reserved VRAM tolerance, zero-byte invalid memory handling.
-- **`DatabaseTests`:** SQLite schema initialization, transaction safety, session persistence, manual check synchronization, cascade deletions.
-- **`LinuxCollectorFixtureTests`:** Synthetic sysfs power supply parsing, charge-to-energy conversion, `/proc/meminfo` total bytes, CPU topology, display DRM modes, thermal zone sensors, and auto-detection specs.
-- **`UITestsPlaywright`:** End-to-end headless Chromium tests validating Auto-Detect specs query, Normal vs Expert mode toggles, sample analysis, health dials, claim comparison matrix, evidence toggles, manual checklist interactions, interactive tools suite (screen, audio, webcam, trackpad, keyboard), history SQLite view, and About/Donate page.
+### Coverage Highlights:
+- **`BatteryTests` (9 tests):** Degradation thresholds, low-cycle discrepancies, zero full charge capacity (`critical`), negative/implausible cycles, above-design tolerances.
+- **`StorageTests` (8 tests):** Low-wear media errors, NVMe critical warning bitmask decoding, invalid negative counters, decimal GB vs. binary GiB alignment.
+- **`MemoryTests` (5 tests):** Material RAM shortfalls, hardware-reserved VRAM tolerance, zero-byte invalid memory handling.
+- **`DatabaseTests` (9 tests):** SQLite schema migrations, transaction safety, session persistence, manual check recording, cascade deletions, and zero-trace portable path routing.
+- **`LinuxCollectorFixtureTests` (20 tests):** Synthetic sysfs power supply parsing, charge-to-energy conversion, `/proc/meminfo` byte calculation, CPU topology, display DRM modes, thermal zone sensors, fan RPM detection, and safe execution timeouts.
+- **`UITestsPlaywright` (10 tests):** End-to-end headless Chromium browser tests validating Auto-Detect specs, Normal vs. Advanced mode toggling, sample analysis, health dials, claims matrix, evidence toggles, manual checklist, interactive tools suite (screen, audio, webcam, trackpad, keyboard), history view, and About modal.
 
 ---
 
@@ -213,13 +203,13 @@ python -m unittest discover -s tests -v
 Created with pride by **[PixelApprentice](https://github.com/PixelApprentice)**.
 
 - **GitHub:** [@PixelApprentice](https://github.com/PixelApprentice)
-- **Project Repository:** [github.com/PixelApprentice/laptop-buyer-kit](https://github.com/PixelApprentice/laptop-buyer-kit)
+- **Repository:** [github.com/PixelApprentice/xflash](https://github.com/PixelApprentice/xflash)
 
 ---
 
 ## 💖 Support & Donate
 
-Aegis Laptop Diagnostics is completely free and open source. If this software helped you test a used laptop, save money, or avoid purchasing damaged hardware, please consider supporting ongoing development:
+Xflash is completely free and open source. If this software helped you test a used laptop, save money, or avoid buying damaged hardware, please consider supporting ongoing development:
 
 - **GitHub Sponsors:** [sponsor @PixelApprentice](https://github.com/sponsors/PixelApprentice)
 - **Ko-fi:** [ko-fi.com/PixelApprentice](https://ko-fi.com/PixelApprentice)
@@ -227,20 +217,10 @@ Aegis Laptop Diagnostics is completely free and open source. If this software he
 
 ### Crypto Support
 | Coin | Address |
-|---|---|
+| :--- | :--- |
 | **Bitcoin (BTC)** | `bc1qpixelapprenticeusedlaptopkitbtc89x` |
 | **Ethereum (ETH)** | `0xPixelApprenticeLaptopBuyerKitEth77a` |
 | **Monero (XMR)** | `888tXMRPixelApprenticePrivateLaptopFund99x` |
-
----
-
-## 🗺 Roadmap for Future Versions
-
-- [ ] Native Windows CIM/WMI hardware collector adapter (`Windows 10/11`)
-- [ ] Native macOS `system_profiler` / IOKit telemetry adapter (Intel & Apple Silicon)
-- [ ] Bootable live-USB Linux image generation
-- [ ] Cryptographic report signing with local buyer key pairs
-- [ ] Model reference specs database for popular ThinkPad, Latitude, EliteBook, and MacBook models
 
 ---
 

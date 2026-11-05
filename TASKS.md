@@ -103,3 +103,13 @@ Use this as the source-of-truth task list when working with Antigravity. Mark it
 - [x] Print-to-PDF certificate optimization: Clean, high-contrast `@media print` layout formatting reports for buyer-seller marketplace negotiations.
 - [x] Persistent mode and offline status bar: Footer status strip displaying air-gapped status, zero-trace confirmation, and active lens.
 - [x] 100% test verification: All 61 unit tests and 10 Playwright E2E browser tests pass cleanly.
+
+## Phase 9 — Repository & Project Renaming to Xflash
+
+- [x] Rename GitHub repository from `laptop-buyer-kit` to `xflash` (`PixelApprentice/xflash`).
+- [x] Update local git remote to `https://github.com/PixelApprentice/xflash.git`.
+- [x] Update project metadata in `pyproject.toml` (`name = "xflash"`, CLI commands `xflash` + `laptop-inspector`).
+- [x] Overhaul `README.md` reflecting the new repository name, Xflash branding, Workshop-Bench UI, and setup instructions.
+- [x] Update web dashboard references and API metadata to reflect `PixelApprentice/xflash`.
+- [x] Provide `start-xflash.bat` alongside `start-aegis.bat` and `run-portable.sh` with `XFLASH_PORTABLE` environment variable support.
+- [x] Verify all 71 unit and E2E browser tests continue to pass.

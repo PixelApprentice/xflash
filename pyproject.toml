@@ -3,14 +3,15 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "laptop-buyer-kit"
+name = "xflash"
 version = "3.0.0"
-description = "Xflash — Offline-first laptop hardware diagnostics, discrepancy detection, and used-buyer assurance"
+description = "Xflash: Check before you pay. Offline-first, read-only hardware assurance and seller listing verification tool for used laptops."
 readme = "README.md"
 requires-python = ">=3.10"
 license = {file = "LICENSE"}
 authors = [{name = "PixelApprentice", email = "pixelapprentice@users.noreply.github.com"}]
 keywords = [
+    "xflash",
     "laptop",
     "hardware-diagnostics",
     "used-laptop",
@@ -46,7 +47,14 @@ test = [
     "playwright>=1.40.0",
 ]
 
+[project.urls]
+Homepage = "https://github.com/PixelApprentice/xflash"
+Documentation = "https://github.com/PixelApprentice/xflash#readme"
+Repository = "https://github.com/PixelApprentice/xflash.git"
+Issues = "https://github.com/PixelApprentice/xflash/issues"
+
 [project.scripts]
+xflash = "laptop_inspector.cli:main"
 laptop-inspector = "laptop_inspector.cli:main"
 
 [tool.setuptools.packages.find]

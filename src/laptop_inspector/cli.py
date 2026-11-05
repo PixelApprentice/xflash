@@ -13,8 +13,8 @@ from .web.server import run_server
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="laptop-inspector",
-        description="Offline-first laptop hardware diagnostics, discrepancy detection, and buyer assurance.",
+        prog="xflash",
+        description="Xflash: Check before you pay. Offline-first laptop hardware diagnostics, discrepancy detection, and buyer assurance.",
     )
     subparsers = parser.add_subparsers(dest="subcommand", help="Sub-commands")
 
