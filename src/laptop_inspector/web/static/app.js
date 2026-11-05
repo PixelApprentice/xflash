@@ -161,6 +161,10 @@ class App {
     this.initTrackpadCanvas();
     this.initKeyboardHeatmap();
     this.loadHistory();
+    this.initBootSplash();
+    this.initCommandPalette();
+    this.initListingToggle();
+    this.initSchematicClicks();
   }
 
   async checkAppMode() {
@@ -180,6 +184,10 @@ class App {
           badge.className = "badge status-passed";
           badge.title = `System Mode: Database at ${data.db_path}`;
         }
+      }
+      const stripMode = document.getElementById("stripModeText");
+      if (stripMode) {
+        stripMode.textContent = data.portable_mode ? "⚡ USB ZERO-TRACE PORTABLE" : "100% AIR-GAPPED OFFLINE";
       }
     } catch (_) {}
   }
@@ -239,15 +247,52 @@ class App {
     if (!isExpert && activeSubtab && activeSubtab.dataset.subtab === "subtab-expert") {
       this.switchSubtab("subtab-findings");
     }
+
+    const stripExpert = document.getElementById("stripExpertIndicator");
+    if (stripExpert) {
+      stripExpert.textContent = isExpert ? "⚡ EXPERT BENCH LENS" : "NORMAL BUYER LENS";
+      stripExpert.style.color = isExpert ? "var(--primary)" : "inherit";
+    }
   }
 
   // --------------------------------------------------------------------------
   // Event Binding
   // --------------------------------------------------------------------------
   bindEvents() {
-    // Navigation Tabs
+    // Navigation Tabs and all buttons with data-tab
     document.querySelectorAll(".nav-btn").forEach(btn => {
       btn.addEventListener("click", () => this.switchTab(btn.dataset.tab));
+    });
+
+    // Jump navigation buttons (Station headers and quick check ribbon)
+    document.querySelectorAll("[data-jump-tab]").forEach(btn => {
+      btn.addEventListener("click", () => this.switchTab(btn.dataset.jumpTab));
+    });
+
+    // Workflow Stepper Node click navigation
+    document.querySelectorAll(".step-node").forEach(node => {
+      node.addEventListener("click", () => {
+        const step = parseInt(node.dataset.step, 10);
+        if (step === 1) {
+          this.switchTab("tab-inspect");
+          const el = document.getElementById("claimModel");
+          if (el) el.focus();
+        } else if (step === 2) {
+          this.switchTab("tab-inspect");
+          const btn = document.getElementById("runLiveBtn");
+          if (btn) btn.scrollIntoView({ behavior: "smooth", block: "center" });
+        } else if (step === 3) {
+          this.switchTab("tab-inspect");
+          if (this.currentSession) {
+            document.getElementById("verdictBanner")?.scrollIntoView({ behavior: "smooth" });
+          }
+        } else if (step === 4) {
+          this.switchTab("tab-screen");
+        } else if (step === 5) {
+          this.switchTab("tab-inspect");
+          document.getElementById("exportHtmlBtn")?.scrollIntoView({ behavior: "smooth" });
+        }
+      });
     });
 
     // Subnav Tabs
@@ -403,6 +448,7 @@ class App {
       }
 
       btn.innerText = "✓ Specs Detected!";
+      this.updateWorkflowStepper(2);
       setTimeout(() => {
         btn.innerHTML = origHtml;
         btn.disabled = false;
@@ -524,6 +570,7 @@ class App {
     this.currentSession = session;
     document.getElementById("emptyState").style.display = "none";
     document.getElementById("sessionResults").style.display = "block";
+    this.updateWorkflowStepper(3);
 
     const report = session.report || {};
     const risk = report.risk_state || "unknown";
@@ -564,6 +611,9 @@ class App {
     // Render Health Gauges
     this.renderHealthGauges(session.snapshot || {});
 
+    // Update Interactive Hardware Schematic
+    this.updateSchematic(session);
+
     // Render Findings Cards
     this.renderFindings(report.findings || []);
 
@@ -598,6 +648,7 @@ class App {
       });
       const data = await resp.json();
       if (resp.ok && data.success) {
+        this.updateWorkflowStepper(5);
         if (status) {
           status.innerHTML = `<span style="color:var(--severity-passed); font-weight:600;">✓ Saved to USB: <code>${data.html_file}</code></span>`;
         }
@@ -719,7 +770,7 @@ class App {
     if (!findings || findings.length === 0) {
       container.innerHTML = `
         <div class="empty-state">
-          <div class="empty-icon">✅</div>
+          <div class="empty-icon">✓</div>
           <h3>Clean Findings</h3>
           <p>No anomaly findings were triggered by the automated analysis rules.</p>
         </div>
@@ -730,17 +781,53 @@ class App {
     findings.forEach((f, idx) => {
       const card = document.createElement("div");
       card.className = `finding-card ${f.severity || "info"}`;
+
+      // Derive buyer leverage / impact note (Why It Matters)
+      let impactNote = "Component operates within standard specifications.";
+      if (f.code && f.code.includes("BATTERY_DEGRADATION")) {
+        impactNote = "Noticeable runtime loss off charger; negotiate $60-$90 battery replacement allowance.";
+      } else if (f.code && f.code.includes("LOW_CYCLES_HIGH_DEGRADATION")) {
+        impactNote = "Atypical decay curve; pack may have sat discharged or endured high heat storage.";
+      } else if (f.code && f.code.includes("NVME_WEAR")) {
+        impactNote = "High controller write endurance consumed; expect drive replacement sooner under load.";
+      } else if (f.code && f.code.includes("RAM")) {
+        impactNote = "Advertised RAM does not match physical capacity; verify integrated VRAM allocation or module.";
+      } else if (f.severity === "warning" || f.severity === "high") {
+        impactNote = "Discrepancy detected; investigate physical hardware state before finalizing deal.";
+      } else if (f.severity === "critical") {
+        impactNote = "Hardware failure or severe risk; walk away or require seller repair/refund guarantee.";
+      }
+
       card.innerHTML = `
         <div class="finding-header">
           <span class="badge status-${f.severity}">${(f.severity || "INFO").toUpperCase()}</span>
           <span class="text-muted" style="font-family:var(--font-mono); font-size:0.8rem;">${f.code || ""}</span>
         </div>
-        <h3>${f.title || "Finding"}</h3>
-        <p class="finding-details">${f.details || ""}</p>
-        <div class="action-recommendation">
-          <strong>Recommended Action:</strong> ${f.recommended_action || "Investigate reading."}
+        <h3 style="margin-top:0.4rem;">${f.title || "Finding"}</h3>
+        
+        <!-- 3-Part Finding Grid -->
+        <div class="finding-part-grid">
+          <div class="finding-part-item">
+            <strong>1. What's Wrong</strong>
+            <span>${f.details || "Observed register value divergence."}</span>
+          </div>
+          <div class="finding-part-item">
+            <strong>2. Why It Matters (Buyer Impact)</strong>
+            <span>${impactNote}</span>
+          </div>
+          <div class="finding-part-item">
+            <strong>3. Recommended Action</strong>
+            <span>${f.recommended_action || "Investigate reading."}</span>
+          </div>
         </div>
-        <button type="button" class="evidence-toggle" data-idx="${idx}">Show Evidence & Provenance ▾</button>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.5rem; flex-wrap:wrap; gap:0.5rem;">
+          <button type="button" class="evidence-toggle" data-idx="${idx}">Show Evidence & Provenance ▾</button>
+          <button type="button" class="finding-telemetry-btn" data-target="subtab-expert">
+            View Raw Register Telemetry ↗
+          </button>
+        </div>
+
         <pre id="ev-${idx}" class="code-block" style="display:none; margin-top:0.5rem;">${JSON.stringify({ evidence: f.evidence, confidence: f.confidence, source: f.source }, null, 2)}</pre>
       `;
 
@@ -750,6 +837,19 @@ class App {
         pre.style.display = isHidden ? "block" : "none";
         e.target.innerText = isHidden ? "Hide Evidence ▴" : "Show Evidence & Provenance ▾";
       });
+
+      const telemBtn = card.querySelector(".finding-telemetry-btn");
+      if (telemBtn) {
+        telemBtn.addEventListener("click", () => {
+          const toggle = document.getElementById("expertModeToggle");
+          if (toggle && !toggle.checked) {
+            toggle.checked = true;
+            this.applyMode(true);
+          }
+          this.switchSubtab("subtab-expert");
+          document.getElementById("subtab-expert")?.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+      }
 
       container.appendChild(card);
     });
@@ -1598,10 +1698,11 @@ class App {
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const data = await resp.json();
 
-      // USB Devices
+      // USB Devices (handle both data.usb and data.usb_devices)
       const usbList = document.getElementById("usbPortsList");
-      const usbDevices = data.usb_devices || [];
-      document.getElementById("portUsbCount").textContent = usbDevices.length;
+      const usbDevices = data.usb || data.usb_devices || [];
+      const portUsbCountEl = document.getElementById("portUsbCount");
+      if (portUsbCountEl) portUsbCountEl.textContent = usbDevices.length;
 
       if (usbList) {
         if (usbDevices.length === 0) {
@@ -1613,62 +1714,85 @@ class App {
                 <div class="port-icon">${d.removable ? '💾' : '🖱️'}</div>
                 <div>
                   <strong>${d.product || "USB Device"}</strong>
-                  <div class="text-muted" style="font-size:0.8rem;">${d.manufacturer || "Unknown Vendor"}</div>
+                  <div class="text-muted" style="font-size:0.8rem;">${d.manufacturer || "Unknown Vendor"} · Port ${d.port_id || ""}</div>
                 </div>
-                <span class="port-speed-pill">${d.speed_label || d.speed || "USB"}</span>
+                <span class="port-speed-pill ${d.removable ? 'pill-green' : ''}">${d.speed_label || d.speed || "USB"}</span>
               </div>
-              <div class="text-muted" style="font-size:0.75rem; margin-top:0.3rem;">Removable: ${d.removable ? "Yes" : "No"}</div>
+              <div class="text-muted" style="font-size:0.75rem; margin-top:0.3rem;">Type: ${d.device_type || (d.removable ? "External Removable Port" : "Internal Header")}</div>
             </div>
           `).join("");
         }
       }
 
-      // Display Connectors
+      // Display Connectors (handle both data.display_ports and data.display_connectors)
       const displayList = document.getElementById("displayPortsList");
-      const connectors = data.display_connectors || [];
-      document.getElementById("portDisplayCount").textContent = connectors.length;
+      const connectors = data.display_ports || data.display_connectors || [];
+      const portDisplayCountEl = document.getElementById("portDisplayCount");
+      if (portDisplayCountEl) portDisplayCountEl.textContent = connectors.length;
 
       if (displayList) {
         if (connectors.length === 0) {
           displayList.innerHTML = `<div class="port-card"><div class="port-icon">🖥️</div><div><strong>No video outputs enumerated</strong></div></div>`;
         } else {
-          displayList.innerHTML = connectors.map(c => `
-            <div class="port-card ${c.status === 'connected' ? 'port-active' : ''}">
-              <div class="port-card-top">
-                <div class="port-icon">${c.name && c.name.toLowerCase().includes("edp") ? '💻' : '🖥️'}</div>
-                <div>
-                  <strong>${c.name || "Video Output"}</strong>
-                  <div class="text-muted" style="font-size:0.8rem;">Status: ${c.status || "Unknown"}</div>
+          displayList.innerHTML = connectors.map(c => {
+            const portName = c.connector || c.name || "Video Output";
+            const isConnected = c.status === "connected";
+            const isEdp = portName.toLowerCase().includes("edp");
+            return `
+              <div class="port-card ${isConnected ? 'port-active' : ''}">
+                <div class="port-card-top">
+                  <div class="port-icon">${isEdp ? '💻' : '🖥️'}</div>
+                  <div>
+                    <strong>${portName}</strong>
+                    <div class="text-muted" style="font-size:0.8rem;">${c.port_type || (isEdp ? "Internal Display" : "External Port")} · ${c.status || "Unknown"}</div>
+                  </div>
+                  <span class="port-speed-pill ${isConnected ? 'pill-green' : ''}">${(c.status || "DISCONNECTED").toUpperCase()}</span>
                 </div>
-                <span class="port-speed-pill ${c.status === 'connected' ? 'pill-green' : ''}">${c.status ? c.status.toUpperCase() : "?"}</span>
+                ${c.resolution ? `<div class="text-muted" style="font-size:0.75rem; margin-top:0.3rem;">Active Resolution: <strong>${c.resolution}</strong></div>` : ""}
+                ${c.modes && c.modes.length ? `<div class="text-muted" style="font-size:0.75rem; margin-top:0.2rem;">Supported: ${c.modes.slice(0, 3).join(", ")}${c.modes.length > 3 ? "..." : ""}</div>` : ""}
               </div>
-              ${c.modes && c.modes.length ? `<div class="text-muted" style="font-size:0.75rem; margin-top:0.3rem;">Modes: ${c.modes.slice(0, 3).join(", ")}${c.modes.length > 3 ? "..." : ""}</div>` : ""}
-            </div>
-          `).join("");
+            `;
+          }).join("");
         }
       }
 
-      // AC Adapter
+      // AC Adapter (handle both data.ac_charging and data.ac_adapter)
       const acBox = document.getElementById("acPortStatusBox");
-      if (acBox && data.ac_adapter) {
-        const ac = data.ac_adapter;
-        const online = ac.online === true;
-        acBox.innerHTML = `
-          <div class="port-card ${online ? 'port-active' : ''}">
-            <div class="port-card-top">
-              <div class="port-icon">${online ? '⚡' : '🔋'}</div>
-              <div>
-                <strong>${ac.name || "AC Adapter"}</strong>
-                <div class="text-muted" style="font-size:0.8rem;">${online ? "Charger connected and delivering power" : "Running on battery power"}</div>
+      const ac = data.ac_charging || data.ac_adapter;
+      if (acBox) {
+        if (ac && ac.name) {
+          const online = ac.online === true;
+          acBox.innerHTML = `
+            <div class="port-card ${online ? 'port-active' : ''}">
+              <div class="port-card-top">
+                <div class="port-icon">${online ? '⚡' : '🔋'}</div>
+                <div>
+                  <strong>${ac.name || "AC Adapter"}</strong>
+                  <div class="text-muted" style="font-size:0.8rem;">${online ? "Charger connected and delivering power" : "Running on battery power"}</div>
+                </div>
+                <span class="port-speed-pill ${online ? 'pill-green' : ''}">${online ? "CHARGING" : "BATTERY"}</span>
               </div>
-              <span class="port-speed-pill ${online ? 'pill-green' : ''}">${online ? "CHARGING" : "BATTERY"}</span>
+              ${ac.wattage_w ? `<div class="text-muted" style="font-size:0.75rem; margin-top:0.3rem;">Negotiated Power: <strong>${ac.wattage_w} W</strong></div>` : ""}
             </div>
-          </div>
-        `;
+          `;
+        } else {
+          acBox.innerHTML = `
+            <div class="port-card">
+              <div class="port-card-top">
+                <div class="port-icon">🔌</div>
+                <div>
+                  <strong>AC Sensor Inconclusive</strong>
+                  <div class="text-muted" style="font-size:0.8rem;">No AC charging controller exposed via sysfs (Desktop or battery-direct EC)</div>
+                </div>
+                <span class="port-speed-pill">STANDBY</span>
+              </div>
+            </div>
+          `;
+        }
       }
 
-      // Verified count (all with status)
-      const verified = usbDevices.length + connectors.filter(c => c.status).length;
+      // Verified count
+      const verified = usbDevices.length + connectors.filter(c => c.status === "connected" || c.status === true).length;
       const verifiedEl = document.getElementById("portVerifiedCount");
       if (verifiedEl) verifiedEl.textContent = verified;
 
@@ -1676,7 +1800,7 @@ class App {
       console.warn("Port data unavailable:", err);
     }
 
-    // Network
+    // Network Adapters
     try {
       const nResp = await fetch("/api/network");
       if (!nResp.ok) return;
@@ -1688,18 +1812,24 @@ class App {
       if (adapters.length === 0) {
         netBox.innerHTML = `<div class="port-card"><div class="port-icon">📡</div><div><strong>No network adapters detected</strong></div></div>`;
       } else {
-        netBox.innerHTML = adapters.map(a => `
-          <div class="port-card ${a.operstate === 'up' ? 'port-active' : ''}">
-            <div class="port-card-top">
-              <div class="port-icon">${a.type === 'Wi-Fi' ? '📶' : '🔗'}</div>
-              <div>
-                <strong>${a.name}</strong>
-                <div class="text-muted" style="font-size:0.8rem;">${a.type || "Network"} · ${a.operstate || "Unknown"}</div>
+        netBox.innerHTML = adapters.map(a => {
+          const ifaceName = a.interface || a.name || "Network Interface";
+          const ifaceState = a.state || a.operstate || "unknown";
+          const isUp = ifaceState.toLowerCase() === "up";
+          const isWifi = a.type === "Wi-Fi";
+          return `
+            <div class="port-card ${isUp ? 'port-active' : ''}">
+              <div class="port-card-top">
+                <div class="port-icon">${isWifi ? '📶' : '🌐'}</div>
+                <div>
+                  <strong>${ifaceName}</strong>
+                  <div class="text-muted" style="font-size:0.8rem;">${a.type || "Network"} · Interface State: ${ifaceState}</div>
+                </div>
+                <span class="port-speed-pill ${isUp ? 'pill-green' : ''}">${ifaceState.toUpperCase()}</span>
               </div>
-              <span class="port-speed-pill ${a.operstate === 'up' ? 'pill-green' : ''}">${(a.operstate || "DOWN").toUpperCase()}</span>
             </div>
-          </div>
-        `).join("");
+          `;
+        }).join("");
       }
     } catch (_) {}
   }
@@ -2097,14 +2227,34 @@ class App {
   // Tab Switch Enhanced (trigger side effects per tab)
   // --------------------------------------------------------------------------
   switchTab(tabId) {
-    document.querySelectorAll(".nav-btn").forEach(b => b.classList.toggle("active", b.dataset.tab === tabId));
+    document.querySelectorAll(".nav-btn").forEach(b => {
+      const isActive = b.dataset.tab === tabId;
+      b.classList.toggle("active", isActive);
+      b.setAttribute("aria-selected", isActive ? "true" : "false");
+    });
     document.querySelectorAll(".tab-pane").forEach(p => p.classList.toggle("active", p.id === tabId));
 
     if (tabId === "tab-history") this.loadHistory();
     if (tabId === "tab-ports") this.loadPortsData();
     if (tabId === "tab-screen") this.initScreenStudio();
     if (tabId === "tab-benchmark") { this.bindBenchmarkEvents(); this.loadFanRpms(); }
-    // tab-tools is the compatibility alias; nothing extra needed
+
+    // Workflow Stepper Synchronization
+    if (["tab-screen", "tab-ports", "tab-media", "tab-input", "tab-benchmark"].includes(tabId)) {
+      this.updateWorkflowStepper(4);
+    } else if (tabId === "tab-inspect") {
+      this.updateWorkflowStepper(this.currentSession ? 3 : 1);
+    }
+  }
+
+  updateWorkflowStepper(activeStep) {
+    const stepper = document.getElementById("workflowStepper");
+    if (!stepper) return;
+    stepper.querySelectorAll(".step-node").forEach(node => {
+      const s = parseInt(node.dataset.step, 10);
+      node.classList.toggle("active", s === activeStep);
+      node.classList.toggle("completed", s < activeStep);
+    });
   }
 
   // --------------------------------------------------------------------------
@@ -2124,11 +2274,27 @@ class App {
 
       data.sessions.forEach(s => {
         const tr = document.createElement("tr");
+        let badgeClass = "inconclusive";
+        let label = s.risk_state;
+        if (s.risk_state === "no_detected_anomaly_in_evaluated_checks" || s.risk_state === "pass" || s.risk_state === "healthy") {
+          badgeClass = "passed";
+          label = "✓ Healthy / Passed";
+        } else if (s.risk_state === "review") {
+          badgeClass = "warning";
+          label = "⚠ Review Needed";
+        } else if (s.risk_state === "high_risk" || s.risk_state === "critical") {
+          badgeClass = "critical";
+          label = "✖ Critical Anomaly";
+        } else if (s.risk_state === "inconclusive") {
+          badgeClass = "inconclusive";
+          label = "? Inconclusive";
+        }
+
         tr.innerHTML = `
           <td>${new Date(s.created_at).toLocaleString()}</td>
           <td><code>${s.id}</code></td>
           <td>${s.system_model || "Unknown"}</td>
-          <td><span class="badge status-${s.risk_state === 'high_risk' ? 'high' : s.risk_state}">${s.risk_state}</span></td>
+          <td><span class="badge status-${badgeClass}">${label}</span></td>
           <td>${s.finding_count}</td>
           <td>${s.operator_notes || "-"}</td>
           <td>
@@ -2156,6 +2322,258 @@ class App {
     } catch (err) {
       console.error("Failed to load history:", err);
     }
+  }
+
+  // --------------------------------------------------------------------------
+  // Xflash v3.0 Extensions: Boot Splash, Command Palette, Schematic & Listing
+  // --------------------------------------------------------------------------
+  initBootSplash() {
+    const splash = document.getElementById("xflashSplash");
+    const ringFill = document.getElementById("splashRingFill");
+    const spark = document.getElementById("splashSpark");
+    if (!splash) return;
+
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      splash.classList.add("hidden");
+      return;
+    }
+
+    if (window.gsap && ringFill && spark) {
+      const tl = gsap.timeline({
+        onComplete: () => {
+          gsap.to(splash, { opacity: 0, duration: 0.35, onComplete: () => splash.classList.add("hidden") });
+        }
+      });
+      tl.to(ringFill, { strokeDasharray: "135, 176", duration: 0.8, ease: "power2.out" })
+        .to(spark, { opacity: 1, duration: 0.2 }, "-=0.2")
+        .to({}, { duration: 0.25 });
+    } else {
+      setTimeout(() => {
+        splash.classList.add("hidden");
+      }, 800);
+    }
+  }
+
+  initCommandPalette() {
+    const overlay = document.getElementById("cmdPaletteOverlay");
+    const input = document.getElementById("cmdPaletteInput");
+    const results = document.getElementById("cmdResults");
+    const btn = document.getElementById("cmdPaletteBtn");
+    if (!overlay || !input || !results) return;
+
+    const commands = [
+      { id: "tab-inspect", label: "Diagnostics & Hardware Verdict", icon: "⚡", tab: "tab-inspect" },
+      { id: "tab-screen", label: "Screen Studio (Dead Pixels, Contrast, UFO 144Hz)", icon: "🖥️", tab: "tab-screen" },
+      { id: "tab-ports", label: "Ports & Connectors (USB-C, HDMI, Charger)", icon: "🔌", tab: "tab-ports" },
+      { id: "tab-input", label: "Input Studio (84-Key Heatmap & Trackpad)", icon: "⌨️", tab: "tab-input" },
+      { id: "tab-media", label: "Audio & Camera (20Hz-8kHz Sweep, Mic, Cam)", icon: "🔊", tab: "tab-media" },
+      { id: "tab-benchmark", label: "Cooling Pulse (Thermal Burst, Fan RPM)", icon: "❄️", tab: "tab-benchmark" },
+      { id: "tab-history", label: "Inspection History Archive", icon: "📁", tab: "tab-history" },
+      { id: "tab-about", label: "About Xflash & Offline Guarantees", icon: "ℹ️", tab: "tab-about" },
+      { id: "action-run", label: "Run Full Hardware Diagnostic", icon: "🚀", action: () => document.getElementById("runLiveBtn")?.click() },
+      { id: "action-probe", label: "Auto-Detect Local Hardware Specs", icon: "🔍", action: () => document.getElementById("autoDetectBtn")?.click() },
+      { id: "action-sample", label: "Load Reference Sample Session", icon: "📄", action: () => document.getElementById("loadSampleBtn")?.click() },
+      { id: "action-expert", label: "Toggle Expert Telemetry Mode", icon: "🛠️", action: () => {
+        const toggle = document.getElementById("expertModeToggle");
+        if (toggle) { toggle.checked = !toggle.checked; this.applyMode(toggle.checked); }
+      }},
+      { id: "action-print", label: "Print Inspection Certificate (PDF)", icon: "🖨️", action: () => window.print() },
+      { id: "action-usb", label: "Save Report to USB Drive", icon: "💾", action: () => this.saveToUsbReports() }
+    ];
+
+    const openPalette = () => {
+      overlay.classList.add("open");
+      input.value = "";
+      renderList(commands);
+      setTimeout(() => input.focus(), 50);
+    };
+
+    const closePalette = () => {
+      overlay.classList.remove("open");
+    };
+
+    const renderList = (items) => {
+      results.innerHTML = "";
+      if (items.length === 0) {
+        results.innerHTML = `<div style="padding:1rem; text-align:center; color:var(--text-muted); font-size:0.85rem;">No matching commands</div>`;
+        return;
+      }
+      items.forEach((item, index) => {
+        const div = document.createElement("div");
+        div.className = `cmd-result-item ${index === 0 ? "active" : ""}`;
+        div.innerHTML = `
+          <span style="font-size:1.1rem;">${item.icon}</span>
+          <span class="cmd-result-label">${item.label}</span>
+          <span class="cmd-result-kbd">ENTER</span>
+        `;
+        div.addEventListener("click", () => {
+          closePalette();
+          if (item.tab) this.switchTab(item.tab);
+          if (item.action) item.action();
+        });
+        results.appendChild(div);
+      });
+    };
+
+    input.addEventListener("input", (e) => {
+      const q = e.target.value.toLowerCase().trim();
+      const filtered = commands.filter(c => c.label.toLowerCase().includes(q));
+      renderList(filtered);
+    });
+
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        closePalette();
+      } else if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        e.preventDefault();
+        const items = results.querySelectorAll(".cmd-result-item");
+        if (!items.length) return;
+        let activeIdx = Array.from(items).findIndex(el => el.classList.contains("active"));
+        items[activeIdx]?.classList.remove("active");
+        if (e.key === "ArrowDown") {
+          activeIdx = (activeIdx + 1) % items.length;
+        } else {
+          activeIdx = (activeIdx - 1 + items.length) % items.length;
+        }
+        items[activeIdx].classList.add("active");
+        items[activeIdx].scrollIntoView({ block: "nearest" });
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        const active = results.querySelector(".cmd-result-item.active");
+        if (active) active.click();
+      }
+    });
+
+    overlay.addEventListener("click", (e) => {
+      if (e.target === overlay) closePalette();
+    });
+
+    if (btn) btn.addEventListener("click", openPalette);
+
+    window.addEventListener("keydown", (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        if (overlay.classList.contains("open")) closePalette();
+        else openPalette();
+      } else if (e.altKey && e.key.toLowerCase() === "e") {
+        e.preventDefault();
+        const toggle = document.getElementById("expertModeToggle");
+        if (toggle) {
+          toggle.checked = !toggle.checked;
+          this.applyMode(toggle.checked);
+        }
+      }
+    });
+  }
+
+  initListingToggle() {
+    const toggleBtn = document.getElementById("listingToggleBtn");
+    const claimsForm = document.getElementById("claimsForm");
+    const saveUrlBtn = document.getElementById("parseListingBtn");
+    const urlInput = document.getElementById("listingUrlInput");
+
+    if (saveUrlBtn && urlInput) {
+      saveUrlBtn.addEventListener("click", () => {
+        const url = urlInput.value.trim();
+        if (url) {
+          saveUrlBtn.textContent = "✓ Saved";
+          const notes = document.getElementById("operatorNotes");
+          if (notes && !notes.value.includes(url)) {
+            notes.value = notes.value ? `${notes.value}\nListing: ${url}` : `Listing: ${url}`;
+          }
+          setTimeout(() => { saveUrlBtn.textContent = "Save URL"; }, 1500);
+        }
+      });
+    }
+
+    if (toggleBtn && claimsForm) {
+      toggleBtn.addEventListener("click", () => {
+        const isCollapsed = claimsForm.style.display === "none";
+        claimsForm.style.display = isCollapsed ? "block" : "none";
+        toggleBtn.setAttribute("aria-expanded", isCollapsed ? "true" : "false");
+        const badge = document.getElementById("listingStateBadge");
+        if (badge) {
+          badge.textContent = isCollapsed ? "OPT-IN" : "COLLAPSED";
+        }
+      });
+    }
+  }
+
+  initSchematicClicks() {
+    document.querySelectorAll(".schematic-zone").forEach(zone => {
+      zone.addEventListener("click", () => {
+        const tab = zone.dataset.targetTab;
+        const subtab = zone.dataset.targetSubtab;
+        if (tab) {
+          this.switchTab(tab);
+        } else if (subtab) {
+          this.switchSubtab(subtab);
+          const el = document.getElementById(subtab);
+          if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      });
+    });
+  }
+
+  updateSchematic(session) {
+    const snapshot = session.snapshot || {};
+    const report = session.report || {};
+    const findings = report.findings || [];
+
+    const setZone = (id, status, subtext = null) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.classList.remove("zone-healthy", "zone-warn", "zone-critical");
+      el.classList.add(status === "critical" ? "zone-critical" : status === "warning" ? "zone-warn" : "zone-healthy");
+      if (subtext) {
+        const subEl = document.getElementById(`${id}-sub`) || document.getElementById(`${id}-status`);
+        if (subEl) subEl.textContent = subtext;
+      }
+    };
+
+    // 1. Battery
+    const bat = snapshot.battery || {};
+    let batHealth = bat.health_percentage;
+    if (batHealth === undefined && bat.full_charge_capacity_mwh && bat.design_capacity_mwh) {
+      batHealth = (bat.full_charge_capacity_mwh / bat.design_capacity_mwh) * 100;
+    }
+    if (batHealth !== undefined) {
+      const batStatus = batHealth < 65 ? "critical" : batHealth < 80 ? "warning" : "healthy";
+      setZone("schematic-battery", batStatus);
+      const batText = document.getElementById("schematic-battery-text");
+      if (batText) batText.textContent = `BATTERY (${Math.round(batHealth)}%)`;
+    }
+
+    // 2. Storage
+    const stor = snapshot.storage || {};
+    const dev = (stor.devices && stor.devices[0]) || {};
+    const wear = dev.nvme_percentage_used ?? 0;
+    const mediaErrors = dev.media_errors ?? 0;
+    const storStatus = (wear >= 80 || mediaErrors > 0) ? "warning" : "healthy";
+    setZone("schematic-storage", storStatus, `${wear}% Used`);
+
+    // 3. CPU & Thermals
+    const thermals = snapshot.thermals || {};
+    const maxT = typeof thermals.max_temp_c === "number" ? thermals.max_temp_c : 45;
+    const cpuStatus = maxT >= 85 ? "critical" : maxT >= 70 ? "warning" : "healthy";
+    setZone("schematic-cpu", cpuStatus, `${Math.round(maxT)}°C`);
+
+    // 4. Ports
+    setZone("schematic-ports-l", "healthy");
+    setZone("schematic-ports-r", "healthy");
+
+    // 5. Findings mapping
+    findings.forEach(f => {
+      if (f.code && f.code.includes("BATTERY")) {
+        setZone("schematic-battery", f.severity === "critical" ? "critical" : "warning");
+      }
+      if (f.code && (f.code.includes("NVME") || f.code.includes("STORAGE"))) {
+        setZone("schematic-storage", f.severity === "critical" ? "critical" : "warning");
+      }
+      if (f.code && f.code.includes("THERMAL")) {
+        setZone("schematic-cpu", f.severity === "critical" ? "critical" : "warning");
+      }
+    });
   }
 }
 

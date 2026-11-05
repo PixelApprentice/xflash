@@ -1,16 +1,16 @@
-# Aegis Laptop Diagnostics (Laptop Buyer Kit v2.1)
+# Xflash Laptop Diagnostics (Laptop Buyer Kit v3.0)
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/PixelApprentice/laptop-buyer-kit/master/examples/banner.svg" alt="Aegis Laptop Diagnostics Banner" width="100%" onerror="this.style.display='none'"/>
+  <img src="https://raw.githubusercontent.com/PixelApprentice/laptop-buyer-kit/master/examples/banner.svg" alt="Xflash Laptop Diagnostics Banner" width="100%" onerror="this.style.display='none'"/>
 </p>
 
 <p align="center">
-  <strong>The offline-first, evidence-based hardware diagnostic and used-laptop buyer assurance platform.</strong>
+  <strong>Xflash: Check before you pay. The offline-first hardware diagnostics and buyer assurance platform.</strong>
 </p>
 
 <p align="center">
-  <a href="https://github.com/PixelApprentice/laptop-buyer-kit/actions"><img src="https://img.shields.io/badge/tests-65%20passed-success?style=flat-square" alt="Tests"></a>
-  <a href="https://github.com/PixelApprentice/laptop-buyer-kit/releases"><img src="https://img.shields.io/badge/version-2.1.0-blue?style=flat-square" alt="Version"></a>
+  <a href="https://github.com/PixelApprentice/laptop-buyer-kit/actions"><img src="https://img.shields.io/badge/tests-71%20passed-success?style=flat-square" alt="Tests"></a>
+  <a href="https://github.com/PixelApprentice/laptop-buyer-kit/releases"><img src="https://img.shields.io/badge/version-3.0.0-blue?style=flat-square" alt="Version"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="License"></a>
   <a href="https://python.org"><img src="https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue?style=flat-square" alt="Python"></a>
   <a href="#zero-trust-offline-architecture"><img src="https://img.shields.io/badge/telemetry-0%25%20(100%25%20offline)-orange?style=flat-square" alt="Offline"></a>

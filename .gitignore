@@ -18,3 +18,7 @@ aegis_reports/
 Thumbs.db
 # Never commit real device reports, raw dumps, serials, or personally identifying data.
 real-device-data/
+tab_*.png
+.agents/skills/find-skills
+.agents/skills/ui-ux-pro-max
+.agents/skills/web-design-guidelines

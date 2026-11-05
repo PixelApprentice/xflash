@@ -68,8 +68,8 @@ class InspectorRequestHandler(SimpleHTTPRequestHandler):
             is_portable = is_portable_mode() if self.portable is None else self.portable
             self._send_json({
                 "status": "healthy",
-                "application": "Laptop Buyer Kit",
-                "version": "2.1.0",
+                "application": "Xflash Diagnostics",
+                "version": "3.0.0",
                 "offline_mode": True,
                 "portable_mode": is_portable,
                 "db_path": str(self.db.db_path),

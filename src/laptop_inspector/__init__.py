@@ -1,3 +1,3 @@
-"""Laptop Buyer Kit: Offline-first laptop hardware diagnostics and buyer assurance."""
+"""Xflash: Offline-first laptop hardware diagnostics, discrepancy detection, and buyer assurance."""
 
-__version__ = "2.1.0"
+__version__ = "3.0.0"

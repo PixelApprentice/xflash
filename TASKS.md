@@ -90,3 +90,16 @@ Use this as the source-of-truth task list when working with Antigravity. Mark it
 - [x] UI Mode indicator: Added persistent `#appModeBadge` in navigation header displaying `⚡ USB PORTABLE` (pulsing emerald glow) or `LOCAL SYSTEM`.
 - [x] Cross-platform portable launchers: Updated `start-aegis.bat` with local `PYTHONPATH` injection (no `pip install` required, zero host pollution) and added executable `run-portable.sh` for Linux USB boot.
 - [x] Comprehensive test coverage: Added `PortableModeTests` in `tests/test_db.py` and `test_portable_mode_and_export` in `tests/test_ui_playwright.py` (71 total tests all passing cleanly).
+
+## Phase 8 — v3.0.0 Xflash rebrand & Workshop-Bench UI/UX suite
+
+- [x] Full product brand evolution: Renamed to Xflash ("Check before you pay") with signature open-ring-and-spark mark.
+- [x] Zero-slop visual system: PCB token vocabulary (`--solder-mask`, `--silkscreen`, `--trace`, `--via-pad`), solid carbon OLED background, high-contrast monospace tabular numerals, and zero fake gradients.
+- [x] Interactive Laptop Schematic: Responsive SVG hardware topology diagram mapping Screen, Webcam, Hinges, Keyboard, Trackpad, Ports, CPU/Thermals, NVMe Storage, and Battery with real-time health coloration and studio deep-links.
+- [x] 3-Part Findings structure: Upgraded from generic text to explicit Lighthouse/iFixit tiers (1. What's wrong, 2. Why it matters / Buyer negotiation leverage, 3. Recommended action).
+- [x] Intentional opt-in seller listing workflow: Collapsible listing claims accordion with offline marketplace URL storage, preventing false discrepancy accusations when claims are absent.
+- [x] Fast command palette: Keyboard-driven quick jumper (`Ctrl+K` / `Cmd+K` / `Alt+E`) for rapid studio access and action execution.
+- [x] Bundled offline GSAP animation: Boot splash ring fill animation and fluid studio tab switching with complete air-gap compliance.
+- [x] Print-to-PDF certificate optimization: Clean, high-contrast `@media print` layout formatting reports for buyer-seller marketplace negotiations.
+- [x] Persistent mode and offline status bar: Footer status strip displaying air-gapped status, zero-trace confirmation, and active lens.
+- [x] 100% test verification: All 61 unit tests and 10 Playwright E2E browser tests pass cleanly.

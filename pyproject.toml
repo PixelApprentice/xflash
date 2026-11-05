@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "laptop-buyer-kit"
-version = "2.1.0"
-description = "Offline-first laptop hardware diagnostics, discrepancy detection, and used-buyer assurance"
+version = "3.0.0"
+description = "Xflash — Offline-first laptop hardware diagnostics, discrepancy detection, and used-buyer assurance"
 readme = "README.md"
 requires-python = ">=3.10"
 license = {file = "LICENSE"}

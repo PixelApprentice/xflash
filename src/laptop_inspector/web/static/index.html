@@ -3,83 +3,115 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Aegis Laptop Diagnostics v2.1 — Offline Hardware Assurance</title>
+  <title>Xflash (Aegis) v3.0 — Offline Hardware Assurance &amp; Spec Check</title>
   <link rel="stylesheet" href="app.css">
 </head>
 <body>
+  <!-- Boot Splash (Xflash signature moment: open ring fills as engine initializes) -->
+  <div id="xflashSplash" class="xflash-splash" aria-hidden="true" role="presentation">
+    <div class="splash-content">
+      <svg class="splash-ring-svg" viewBox="0 0 72 72" aria-hidden="true">
+        <circle class="splash-ring-track" cx="36" cy="36" r="28" />
+        <circle id="splashRingFill" class="splash-ring-fill" cx="36" cy="36" r="28" transform="rotate(-90 36 36)" />
+        <circle id="splashSpark" class="splash-spark" cx="64" cy="36" r="3.5" />
+      </svg>
+      <div class="splash-wordmark">X<span>flash</span></div>
+      <div class="splash-tagline">Offline Hardware Assurance · Workshop-Bench v3.0</div>
+    </div>
+  </div>
+
+  <!-- Command Palette Overlay (Ctrl+K / Cmd+K) -->
+  <div id="cmdPaletteOverlay" class="cmd-palette-overlay" role="dialog" aria-modal="true" aria-label="Command Palette">
+    <div class="cmd-palette" id="cmdPaletteBox">
+      <div class="cmd-input-row">
+        <svg class="cmd-input-icon icon-sm" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="cmdPaletteInput" class="cmd-input" placeholder="Jump to studio or test (e.g. Screen, Ports, Input, Cooling, Export)..." autocomplete="off" spellcheck="false" />
+        <span class="cmd-shortcuts">ESC</span>
+      </div>
+      <div class="cmd-results" id="cmdResults" role="listbox"></div>
+      <div class="cmd-footer">
+        <span><kbd>↑</kbd><kbd>↓</kbd> Navigate</span>
+        <span><kbd>Enter</kbd> Select</span>
+        <span><kbd>Esc</kbd> Close</span>
+      </div>
+    </div>
+  </div>
+
   <div id="app">
     <!-- Top Navigation Bar -->
     <header class="navbar">
       <div class="nav-container">
         <!-- Brand -->
         <div class="brand">
-          <div class="brand-shield">
-            <svg viewBox="0 0 32 32" fill="none" class="shield-svg">
-              <polygon points="16 2 28 7 28 17 16 30 4 17 4 7" stroke="currentColor" stroke-width="2.2" fill="rgba(59, 130, 246, 0.12)" />
-              <circle cx="16" cy="14" r="4.5" fill="currentColor" opacity="0.9" />
-              <line x1="16" y1="6" x2="16" y2="9.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-              <line x1="16" y1="18.5" x2="16" y2="24" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-              <line x1="8" y1="14" x2="11.5" y2="14" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-              <line x1="20.5" y1="14" x2="24" y2="14" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          <div class="brand-shield" aria-hidden="true">
+            <svg viewBox="0 0 32 32" fill="none" class="shield-svg" width="30" height="30">
+              <circle cx="16" cy="16" r="11" stroke="#6CA6F2" stroke-width="2.6" stroke-dasharray="52 17" stroke-linecap="round" transform="rotate(-90 16 16)" />
+              <circle cx="25.5" cy="16" r="2.2" fill="#6CA6F2" />
             </svg>
           </div>
           <div class="brand-text">
-            <span class="brand-title">Aegis Laptop Inspector</span>
-            <span class="brand-tag">v2.1.0 · Offline Hardware Assurance</span>
+            <span class="brand-title">Xflash <span style="font-weight:400; opacity:0.8; font-size:0.9em;">· Aegis Diagnostics</span></span>
+            <span class="brand-tag">v3.0 · Check Before You Pay</span>
           </div>
         </div>
 
         <!-- Center Tabs -->
-        <nav class="nav-tabs" role="tablist">
-          <button class="nav-btn active" data-tab="tab-inspect" role="tab">
-            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+        <nav class="nav-tabs" role="tablist" aria-label="Main Diagnostics Navigation">
+          <button class="nav-btn active" data-tab="tab-inspect" role="tab" aria-selected="true">
+            <svg class="icon icon-sm" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
             Diagnostics
           </button>
-          <button class="nav-btn" data-tab="tab-ports" role="tab">
-            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+          <button class="nav-btn" data-tab="tab-ports" role="tab" aria-selected="false">
+            <svg class="icon icon-sm" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
             Ports &amp; Connectors
           </button>
-          <button class="nav-btn" data-tab="tab-screen" role="tab">
-            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          <button class="nav-btn" data-tab="tab-screen" role="tab" aria-selected="false">
+            <svg class="icon icon-sm" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
             Screen Studio
           </button>
-          <button class="nav-btn" data-tab="tab-media" role="tab">
-            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg>
+          <button class="nav-btn" data-tab="tab-media" role="tab" aria-selected="false">
+            <svg class="icon icon-sm" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg>
             Audio &amp; Camera
           </button>
-          <button class="nav-btn" data-tab="tab-input" role="tab">
-            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="6" y1="8" x2="6.01" y2="8"/><line x1="10" y1="8" x2="10.01" y2="8"/><line x1="14" y1="8" x2="14.01" y2="8"/><line x1="18" y1="8" x2="18.01" y2="8"/></svg>
+          <button class="nav-btn" data-tab="tab-input" role="tab" aria-selected="false">
+            <svg class="icon icon-sm" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="6" y1="8" x2="6.01" y2="8"/><line x1="10" y1="8" x2="10.01" y2="8"/><line x1="14" y1="8" x2="14.01" y2="8"/><line x1="18" y1="8" x2="18.01" y2="8"/></svg>
             Input &amp; Trackpad
           </button>
-          <button class="nav-btn" data-tab="tab-benchmark" role="tab">
-            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          <button class="nav-btn" data-tab="tab-benchmark" role="tab" aria-selected="false">
+            <svg class="icon icon-sm" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
             Cooling Pulse
           </button>
           <!-- Alias button for test compatibility - kept visible for backward compat -->
           <button class="nav-btn" data-tab="tab-tools" role="tab" style="display:none; visibility:hidden; position:absolute;">Tools</button>
-          <button class="nav-btn" data-tab="tab-history" role="tab">
-            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <button class="nav-btn" data-tab="tab-history" role="tab" aria-selected="false">
+            <svg class="icon icon-sm" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
             History
           </button>
-          <button class="nav-btn" data-tab="tab-about" role="tab">
-            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          <button class="nav-btn" data-tab="tab-about" role="tab" aria-selected="false">
+            <svg class="icon icon-sm" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
             About &amp; Donate
           </button>
         </nav>
 
-        <!-- Right Controls: Mode Toggle, Local Badge, Theme -->
+        <!-- Right Controls: Command Palette, Mode Toggle, Local Badge, Theme -->
         <div class="nav-actions">
+          <button type="button" id="cmdPaletteBtn" class="btn btn-icon" title="Command Palette (Ctrl+K)" aria-label="Command Palette">
+            <svg class="icon icon-sm" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          </button>
+
           <div class="mode-switch-wrapper" title="Switch between Normal buyer mode and deep Expert hardware inspection mode">
             <span class="mode-label normal-label active">Normal</span>
             <label class="switch">
-              <input type="checkbox" id="expertModeToggle">
+              <input type="checkbox" id="expertModeToggle" aria-label="Toggle Expert Telemetry Mode">
               <span class="slider round"></span>
             </label>
             <span class="mode-label expert-label">Expert</span>
           </div>
 
-          <span id="appModeBadge" class="badge status-passed" title="100% offline, zero network requests">LOCAL</span>
-          <button id="themeToggleBtn" class="btn btn-icon" title="Toggle Theme (Light / Dark)">🌓</button>
+          <span id="appModeBadge" class="badge status-passed" title="100% offline, zero network requests"><span class="pulse-dot"></span>LOCAL</span>
+          <button id="themeToggleBtn" class="btn btn-icon" title="Toggle Theme (Light / Dark)" aria-label="Toggle Theme (Light / Dark)">
+            <svg class="icon" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+          </button>
         </div>
       </div>
     </header>
@@ -90,6 +122,49 @@
       <!-- TAB 1: DIAGNOSTICS & HARDWARE INSPECTION                       -->
       <!-- ============================================================== -->
       <section id="tab-inspect" class="tab-pane active" role="tabpanel">
+        <!-- Minimalist Workflow Stepper -->
+        <div class="workflow-stepper" id="workflowStepper" role="navigation" aria-label="Inspection Workflow Steps">
+          <div class="step-node active" data-step="1" title="Input listing claims or auto-detect specs">
+            <span class="step-badge">1</span>
+            <div class="step-info">
+              <span class="step-title">Specs &amp; Claims</span>
+              <span class="step-desc">Listing info</span>
+            </div>
+          </div>
+          <div class="step-line" aria-hidden="true"></div>
+          <div class="step-node" data-step="2" title="Inspect system hardware snapshot">
+            <span class="step-badge">2</span>
+            <div class="step-info">
+              <span class="step-title">Diagnostic Scan</span>
+              <span class="step-desc">Read-only probe</span>
+            </div>
+          </div>
+          <div class="step-line" aria-hidden="true"></div>
+          <div class="step-node" data-step="3" title="Review health metrics &amp; rule findings">
+            <span class="step-badge">3</span>
+            <div class="step-info">
+              <span class="step-title">Verdict &amp; Health</span>
+              <span class="step-desc">Gauges &amp; findings</span>
+            </div>
+          </div>
+          <div class="step-line" aria-hidden="true"></div>
+          <div class="step-node" data-step="4" title="Interactive studios: screen, audio, keyboard, ports, fan">
+            <span class="step-badge">4</span>
+            <div class="step-info">
+              <span class="step-title">Hardware Studios</span>
+              <span class="step-desc">Display, input, ports</span>
+            </div>
+          </div>
+          <div class="step-line" aria-hidden="true"></div>
+          <div class="step-node" data-step="5" title="Export HTML, JSON, or save directly to USB">
+            <span class="step-badge">5</span>
+            <div class="step-info">
+              <span class="step-title">Export Report</span>
+              <span class="step-desc">USB / PDF / HTML</span>
+            </div>
+          </div>
+        </div>
+
         <div class="grid grid-sidebar">
           <!-- Sidebar: Claims & Auto-Detection -->
           <div class="sidebar-card">
@@ -127,7 +202,25 @@
               </div>
             </div>
 
+            <!-- Optional Seller Listing Claims Module (Intentional Opt-In) -->
+            <div class="listing-toggle-wrapper" style="margin-bottom:0.75rem;">
+              <button type="button" id="listingToggleBtn" class="listing-toggle-btn" aria-expanded="true" aria-controls="claimsForm" style="display:flex; align-items:center; gap:8px; width:100%; padding:0.5rem 0.75rem; background:var(--bg-subtle); border:1px solid var(--border-color); border-radius:var(--radius-sm); font-size:0.8rem; font-weight:600; cursor:pointer;">
+                <svg class="icon icon-sm" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                <span>Seller Listing (Optional Opt-In)</span>
+                <span id="listingStateBadge" class="badge status-passed" style="font-size:0.6rem; margin-left:auto;">OPT-IN</span>
+              </button>
+            </div>
+
             <form id="claimsForm" class="claims-form">
+              <div class="form-group" id="listingUrlGroup">
+                <label for="listingUrlInput">Listing URL or Marketplace Link (Optional)</label>
+                <div style="display:flex; gap:0.4rem;">
+                  <input type="url" id="listingUrlInput" placeholder="https://marketplace.example/item/123..." />
+                  <button type="button" id="parseListingBtn" class="btn btn-secondary btn-sm" title="Record listing reference offline (zero network transmission)">Save URL</button>
+                </div>
+                <span class="field-hint" style="font-size:0.68rem; color:var(--text-muted); display:block; margin-top:2px;">Stored locally with report — zero network lookup.</span>
+              </div>
+
               <div class="form-group">
                 <label for="claimModel">Listing Model Claim</label>
                 <input type="text" id="claimModel" placeholder="e.g. Vivobook X1505ZA / ThinkPad T14" />
@@ -208,9 +301,19 @@
           <!-- Main Diagnostic Results Column -->
           <div class="content-panel">
             <div id="emptyState" class="empty-state">
-              <div class="empty-icon">🛡️</div>
-              <h3>Ready for Inspection</h3>
-              <p>Click <strong>Run Full Hardware Diagnostic</strong> to inspect this laptop, or click <strong>⚡ Auto-Detect Specs</strong> to populate seller listing claims automatically.</p>
+              <div class="empty-icon" aria-hidden="true">
+                <svg class="icon icon-lg" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.8"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2.14 0 4.24-.8 5.85-2.34a1 1 0 0 1 .7 0C14.26 4.2 16.36 5 18.5 5a1 1 0 0 1 1 1v7z"/></svg>
+              </div>
+              <h3>Ready for Hardware Inspection</h3>
+              <p>Enter the seller's listing specs or click <strong>⚡ Auto-Detect Specs</strong>. Then run the diagnostic to verify hardware health, battery wear, and component agreement.</p>
+              <div class="empty-quick-actions">
+                <button type="button" class="btn btn-accent btn-sm" onclick="document.getElementById('autoDetectBtn').click();">
+                  ⚡ Auto-Detect Specs
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('loadSampleBtn').click();">
+                  Load Reference Sample
+                </button>
+              </div>
             </div>
 
             <div id="sessionResults" class="session-results" style="display:none;">
@@ -274,6 +377,89 @@
                   <button type="button" id="printReportBtn" class="btn btn-sm btn-outline">Print View</button>
                   <button type="button" id="saveUsbReportBtn" class="btn btn-sm btn-primary" title="Save HTML and JSON report directly into USB drive ./aegis_reports/">💾 Save to USB Reports</button>
                   <span id="saveUsbReportStatus" class="text-muted" style="font-size:0.75rem; align-self:center;"></span>
+                </div>
+              </div>
+
+              <!-- Interactive Laptop Hardware Schematic (Component Health Map) -->
+              <div id="hardwareSchematic" class="card-box schematic-card" style="margin-bottom:1.25rem;">
+                <div class="sidebar-header" style="margin-bottom:0.4rem;">
+                  <div style="display:flex; align-items:center; gap:8px;">
+                    <svg class="icon icon-sm" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                    <h3 style="margin:0; font-size:0.95rem;">Interactive Hardware Topology Map</h3>
+                  </div>
+                  <span id="schematicOverallBadge" class="badge status-passed" style="font-size:0.65rem;">HARDWARE TOPOLOGY ACTIVE</span>
+                </div>
+                <p class="text-muted" style="font-size:0.78rem; margin-bottom:0.75rem;">Spatial component overview. Click any hardware module below to inspect its dedicated diagnostics or sensor registers.</p>
+                <div class="schematic-svg-wrapper" style="overflow-x:auto;">
+                  <svg class="laptop-schematic-svg" viewBox="0 0 540 280" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Interactive Laptop Component Health Map" style="width:100%; max-width:620px; display:block; margin:0 auto;">
+                    <!-- Screen Lid -->
+                    <rect x="50" y="8" width="440" height="145" rx="8" class="schematic-zone zone-healthy" id="schematic-display" data-target-tab="tab-screen" style="cursor:pointer;" />
+                    <text class="schematic-label" x="270" y="70" id="schematic-display-text" text-anchor="middle" font-size="11" font-weight="700" fill="currentColor">DISPLAY PANEL (eDP)</text>
+                    <text class="schematic-sublabel" x="270" y="86" id="schematic-display-sub" text-anchor="middle" font-size="9" fill="currentColor" opacity="0.75">Click for Screen Studio (Pixels, UFO, Contrast)</text>
+                    <!-- Webcam -->
+                    <rect x="250" y="14" width="40" height="18" rx="4" class="schematic-zone zone-healthy" id="schematic-webcam" data-target-tab="tab-media" style="cursor:pointer;" />
+                    <circle cx="270" cy="23" r="3" fill="#6CA6F2" />
+                    <!-- Left & Right Hinges -->
+                    <rect x="60" y="148" width="36" height="12" rx="2" class="schematic-zone zone-healthy" id="schematic-hinge-l" data-target-subtab="subtab-manual" style="cursor:pointer;" />
+                    <rect x="444" y="148" width="36" height="12" rx="2" class="schematic-zone zone-healthy" id="schematic-hinge-r" data-target-subtab="subtab-manual" style="cursor:pointer;" />
+                    <!-- Lower Chassis Base -->
+                    <rect x="30" y="160" width="480" height="110" rx="8" class="schematic-chassis" stroke="var(--border-color)" stroke-width="1.5" fill="var(--bg-subtle)" />
+                    <!-- Left Ports (USB/AC) -->
+                    <rect x="18" y="172" width="16" height="44" rx="3" class="schematic-zone zone-healthy" id="schematic-ports-l" data-target-tab="tab-ports" style="cursor:pointer;" />
+                    <text class="schematic-vert-label" x="26" y="194" transform="rotate(-90 26 194)" text-anchor="middle" font-size="7" font-weight="700" fill="currentColor">PORTS L</text>
+                    <!-- Right Ports (HDMI/Audio) -->
+                    <rect x="506" y="172" width="16" height="44" rx="3" class="schematic-zone zone-healthy" id="schematic-ports-r" data-target-tab="tab-ports" style="cursor:pointer;" />
+                    <text class="schematic-vert-label" x="514" y="194" transform="rotate(90 514 194)" text-anchor="middle" font-size="7" font-weight="700" fill="currentColor">PORTS R</text>
+                    <!-- Keyboard Area -->
+                    <rect x="54" y="168" width="308" height="58" rx="5" class="schematic-zone zone-healthy" id="schematic-keyboard" data-target-tab="tab-input" style="cursor:pointer;" />
+                    <text class="schematic-label" x="208" y="195" id="schematic-keyboard-text" text-anchor="middle" font-size="10" font-weight="700" fill="currentColor">KEYBOARD MATRIX</text>
+                    <text class="schematic-sublabel" x="208" y="210" id="schematic-keyboard-sub" text-anchor="middle" font-size="8" fill="currentColor" opacity="0.75">Click for Input Studio (84-Key Heatmap)</text>
+                    <!-- Trackpad -->
+                    <rect x="154" y="232" width="108" height="32" rx="4" class="schematic-zone zone-healthy" id="schematic-trackpad" data-target-tab="tab-input" style="cursor:pointer;" />
+                    <text class="schematic-sublabel" x="208" y="252" text-anchor="middle" font-size="8" font-weight="700" fill="currentColor">TRACKPAD &amp; GESTURES</text>
+                    <!-- CPU & Thermals -->
+                    <rect x="372" y="168" width="128" height="34" rx="5" class="schematic-zone zone-healthy" id="schematic-cpu" data-target-tab="tab-benchmark" style="cursor:pointer;" />
+                    <text class="schematic-label" x="436" y="185" id="schematic-cpu-text" text-anchor="middle" font-size="9" font-weight="700" fill="currentColor">CPU &amp; THERMALS</text>
+                    <text class="schematic-sublabel" x="436" y="196" id="schematic-cpu-status" text-anchor="middle" font-size="8" fill="currentColor" opacity="0.75">Normal</text>
+                    <!-- NVMe Storage & Fan -->
+                    <rect x="372" y="206" width="60" height="26" rx="4" class="schematic-zone zone-healthy" id="schematic-storage" data-target-subtab="subtab-expert" style="cursor:pointer;" />
+                    <text class="schematic-sublabel" x="402" y="222" id="schematic-storage-status" text-anchor="middle" font-size="8" font-weight="700" fill="currentColor">NVMe SSD</text>
+                    <rect x="440" y="206" width="60" height="26" rx="4" class="schematic-zone zone-healthy" id="schematic-fan" data-target-tab="tab-benchmark" style="cursor:pointer;" />
+                    <text class="schematic-sublabel" x="470" y="222" id="schematic-fan-status" text-anchor="middle" font-size="8" font-weight="700" fill="currentColor">FAN RPM</text>
+                    <!-- Battery Unit -->
+                    <rect x="372" y="236" width="128" height="28" rx="4" class="schematic-zone zone-healthy" id="schematic-battery" data-target-subtab="subtab-expert" style="cursor:pointer;" />
+                    <text class="schematic-label" x="436" y="253" id="schematic-battery-text" text-anchor="middle" font-size="9" font-weight="700" fill="currentColor">BATTERY PACK</text>
+                  </svg>
+                </div>
+              </div>
+
+              <!-- Quick Hardware Verification Ribbon -->
+              <div class="quick-check-ribbon">
+                <div class="quick-check-title">
+                  <svg class="icon icon-sm" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                  <span>Interactive Testing Studios:</span>
+                </div>
+                <div class="quick-check-actions">
+                  <button type="button" class="quick-tool-btn" data-jump-tab="tab-screen">
+                    <svg class="icon icon-sm" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                    Screen Studio
+                  </button>
+                  <button type="button" class="quick-tool-btn" data-jump-tab="tab-ports">
+                    <svg class="icon icon-sm" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+                    Ports &amp; Cables
+                  </button>
+                  <button type="button" class="quick-tool-btn" data-jump-tab="tab-input">
+                    <svg class="icon icon-sm" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="6" y1="8" x2="6.01" y2="8"/><line x1="10" y1="8" x2="10.01" y2="8"/><line x1="14" y1="8" x2="14.01" y2="8"/><line x1="18" y1="8" x2="18.01" y2="8"/></svg>
+                    Keyboard &amp; Trackpad
+                  </button>
+                  <button type="button" class="quick-tool-btn" data-jump-tab="tab-media">
+                    <svg class="icon icon-sm" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg>
+                    Audio &amp; Mic
+                  </button>
+                  <button type="button" class="quick-tool-btn" data-jump-tab="tab-benchmark">
+                    <svg class="icon icon-sm" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                    Cooling Pulse
+                  </button>
                 </div>
               </div>
 
@@ -399,6 +585,26 @@
       <!-- TAB 2: PORTS & CONNECTORS HARDWARE STATION                     -->
       <!-- ============================================================== -->
       <section id="tab-ports" class="tab-pane" role="tabpanel">
+        <!-- Station Header Bar -->
+        <div class="station-header-bar">
+          <div class="station-header-left">
+            <button type="button" class="btn btn-sm btn-outline station-nav-btn" data-jump-tab="tab-inspect">
+              <svg class="icon icon-sm" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+              Diagnostics Overview
+            </button>
+            <div class="station-header-title">
+              <h2>Ports &amp; Connectors Station</h2>
+              <p>Plug in USB devices, video monitors, and AC charger to verify socket integrity</p>
+            </div>
+          </div>
+          <div class="station-header-actions">
+            <button type="button" class="btn btn-sm btn-primary station-nav-btn" data-jump-tab="tab-screen">
+              Next: Screen Studio
+              <svg class="icon icon-sm" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </button>
+          </div>
+        </div>
+
         <div class="ports-container">
           <div class="ports-summary-bar">
             <div>
@@ -464,11 +670,36 @@
       <!-- TAB 3: SCREEN & DISPLAY STUDIO                                 -->
       <!-- ============================================================== -->
       <section id="tab-screen" class="tab-pane" role="tabpanel">
+        <!-- Station Header Bar -->
+        <div class="station-header-bar">
+          <div class="station-header-left">
+            <button type="button" class="btn btn-sm btn-outline station-nav-btn" data-jump-tab="tab-inspect">
+              <svg class="icon icon-sm" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+              Diagnostics Overview
+            </button>
+            <div class="station-header-title">
+              <h2>Screen &amp; Display Studio</h2>
+              <p>Test dead pixels, grayscale dynamic range, optical sharpness, and panel refresh rate</p>
+            </div>
+          </div>
+          <div class="station-header-actions">
+            <button type="button" class="btn btn-sm btn-outline station-nav-btn" data-jump-tab="tab-ports">
+              ← Ports
+            </button>
+            <button type="button" class="btn btn-sm btn-primary station-nav-btn" data-jump-tab="tab-media">
+              Next: Audio &amp; Camera
+              <svg class="icon icon-sm" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </button>
+          </div>
+        </div>
+
         <div class="screen-studio-grid">
           <!-- Screen Tool 1: Dead Pixel Tester -->
           <div class="tool-card">
             <div class="tool-card-header">
-              <div class="tool-icon">🖥️</div>
+              <div class="tool-icon">
+  <svg class="icon" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+</div>
               <div>
                 <h3>Dead &amp; Stuck Pixel Color Cycler</h3>
                 <p class="text-muted">Cycles pure RGB, monochrome, and contrast panels to spot dead subpixels, pressure marks, and backlight bleed.</p>
@@ -494,7 +725,9 @@
           <!-- Screen Tool 2: Grayscale Contrast & Dynamic Range -->
           <div class="tool-card">
             <div class="tool-card-header">
-              <div class="tool-icon">🌓</div>
+              <div class="tool-icon">
+  <svg class="icon" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+</div>
               <div>
                 <h3>Contrast &amp; Grayscale Dynamic Range</h3>
                 <p class="text-muted">16-step grayscale ramp. Ensure every step from 0% pure black to 100% white is clearly distinguishable without crushed blacks or blown highlights.</p>
@@ -513,7 +746,9 @@
           <!-- Screen Tool 3: Text Sharpness & 1px Grid -->
           <div class="tool-card">
             <div class="tool-card-header">
-              <div class="tool-icon">🔍</div>
+              <div class="tool-icon">
+  <svg class="icon" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+</div>
               <div>
                 <h3>1px Text Sharpness &amp; Subpixel Grid</h3>
                 <p class="text-muted">Inspect subpixel alignment, optical sharpness, and scaling artifacts across fine fonts and a 1px checkerboard pattern.</p>
@@ -533,7 +768,9 @@
           <!-- Screen Tool 4: UFO Motion Blur & Refresh Rate Benchmark -->
           <div class="tool-card">
             <div class="tool-card-header">
-              <div class="tool-icon">🛸</div>
+              <div class="tool-icon">
+  <svg class="icon" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+</div>
               <div>
                 <h3>UFO Motion Blur &amp; Display Refresh Rate</h3>
                 <p class="text-muted">Live animation benchmark measuring exact display refresh rate (Hz), frame time jitter, and pixel response time ghosting.</p>
@@ -560,11 +797,36 @@
       <!-- TAB 4: AUDIO & CAMERA MEDIA LAB                                -->
       <!-- ============================================================== -->
       <section id="tab-media" class="tab-pane" role="tabpanel">
+        <!-- Station Header Bar -->
+        <div class="station-header-bar">
+          <div class="station-header-left">
+            <button type="button" class="btn btn-sm btn-outline station-nav-btn" data-jump-tab="tab-inspect">
+              <svg class="icon icon-sm" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+              Diagnostics Overview
+            </button>
+            <div class="station-header-title">
+              <h2>Audio &amp; Camera Media Lab</h2>
+              <p>Frequency sweep, speaker rattle check, optical webcam feed, and real-time dual microphone level</p>
+            </div>
+          </div>
+          <div class="station-header-actions">
+            <button type="button" class="btn btn-sm btn-outline station-nav-btn" data-jump-tab="tab-screen">
+              ← Screen
+            </button>
+            <button type="button" class="btn btn-sm btn-primary station-nav-btn" data-jump-tab="tab-input">
+              Next: Input &amp; Trackpad
+              <svg class="icon icon-sm" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </button>
+          </div>
+        </div>
+
         <div class="tools-grid">
           <!-- Audio Frequency & Speaker Rattle Tester -->
           <div class="tool-card">
             <div class="tool-card-header">
-              <div class="tool-icon">🔊</div>
+              <div class="tool-icon">
+  <svg class="icon" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><path d="M11 5L6 9H3v6h3l5 4V5z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+</div>
               <div>
                 <h3>Speaker Rattle &amp; Frequency Sweep</h3>
                 <p class="text-muted">Generates pure sine wave sweeps (20Hz–8000Hz) and stereo channel isolation to spot blown speaker diaphragms and chassis buzz.</p>
@@ -594,7 +856,9 @@
           <!-- Webcam & Microphone Live Diagnostic -->
           <div class="tool-card">
             <div class="tool-card-header">
-              <div class="tool-icon">📷</div>
+              <div class="tool-icon">
+  <svg class="icon" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+</div>
               <div>
                 <h3>Webcam &amp; Microphone Diagnostic</h3>
                 <p class="text-muted">Validates camera sensor clarity, optical tint, and real-time dual-array microphone audio volume.</p>
@@ -623,11 +887,36 @@
       <!-- TAB 5: INPUT CONTROLS & TRACKPAD                               -->
       <!-- ============================================================== -->
       <section id="tab-input" class="tab-pane" role="tabpanel">
+        <!-- Station Header Bar -->
+        <div class="station-header-bar">
+          <div class="station-header-left">
+            <button type="button" class="btn btn-sm btn-outline station-nav-btn" data-jump-tab="tab-inspect">
+              <svg class="icon icon-sm" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+              Diagnostics Overview
+            </button>
+            <div class="station-header-title">
+              <h2>Input Controls &amp; Trackpad</h2>
+              <p>9-zone trackpad sensitivity, multi-touch gestures, key debounce test, and full keyboard matrix</p>
+            </div>
+          </div>
+          <div class="station-header-actions">
+            <button type="button" class="btn btn-sm btn-outline station-nav-btn" data-jump-tab="tab-media">
+              ← Audio
+            </button>
+            <button type="button" class="btn btn-sm btn-primary station-nav-btn" data-jump-tab="tab-benchmark">
+              Next: Cooling Pulse
+              <svg class="icon icon-sm" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </button>
+          </div>
+        </div>
+
         <div class="tools-grid">
           <!-- Trackpad & Gesture Canvas -->
           <div class="tool-card" style="grid-column: 1 / -1;">
             <div class="tool-card-header">
-              <div class="tool-icon">🖱️</div>
+              <div class="tool-icon">
+  <svg class="icon" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><path d="M9.53 8.47a5 5 0 1 0-7.07 7.07"/><path d="M12 11a3 3 0 1 0-4.88-4.88"/></svg>
+</div>
               <div>
                 <h3>Trackpad &amp; Multi-Touch Gesture Canvas</h3>
                 <p class="text-muted">Test multi-touch, smooth tracking, edge dead zones, 2-finger scroll, and click responsiveness across the trackpad.</p>
@@ -698,6 +987,29 @@
       <!-- TAB 6: COOLING & PERFORMANCE BENCHMARK                         -->
       <!-- ============================================================== -->
       <section id="tab-benchmark" class="tab-pane" role="tabpanel">
+        <!-- Station Header Bar -->
+        <div class="station-header-bar">
+          <div class="station-header-left">
+            <button type="button" class="btn btn-sm btn-outline station-nav-btn" data-jump-tab="tab-inspect">
+              <svg class="icon icon-sm" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+              Diagnostics Overview
+            </button>
+            <div class="station-header-title">
+              <h2>Cooling &amp; Performance Pulse</h2>
+              <p>5-second bounded CPU thermal dissipation, real-time fan RPM, and ACPI profile test</p>
+            </div>
+          </div>
+          <div class="station-header-actions">
+            <button type="button" class="btn btn-sm btn-outline station-nav-btn" data-jump-tab="tab-input">
+              ← Input
+            </button>
+            <button type="button" class="btn btn-sm btn-primary station-nav-btn" data-jump-tab="tab-inspect">
+              Finish: View Report
+              <svg class="icon icon-sm" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </button>
+          </div>
+        </div>
+
         <div class="benchmark-container">
           <div class="card-box">
             <h2>5-Second Bounded Thermal Pulse</h2>
@@ -780,6 +1092,20 @@
       <!-- TAB 7: HISTORY                                                 -->
       <!-- ============================================================== -->
       <section id="tab-history" class="tab-pane" role="tabpanel">
+        <!-- Station Header Bar -->
+        <div class="station-header-bar">
+          <div class="station-header-left">
+            <button type="button" class="btn btn-sm btn-outline station-nav-btn" data-jump-tab="tab-inspect">
+              <svg class="icon icon-sm" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+              Diagnostics Overview
+            </button>
+            <div class="station-header-title">
+              <h2>Inspection History &amp; Archive</h2>
+              <p>All previously completed laptop assessments stored in local SQLite database</p>
+            </div>
+          </div>
+        </div>
+
         <div class="card-box">
           <div class="card-header-row">
             <h2>Inspection History</h2>
@@ -807,6 +1133,20 @@
       <!-- TAB 8: ABOUT & DONATE                                          -->
       <!-- ============================================================== -->
       <section id="tab-about" class="tab-pane" role="tabpanel">
+        <!-- Station Header Bar -->
+        <div class="station-header-bar">
+          <div class="station-header-left">
+            <button type="button" class="btn btn-sm btn-outline station-nav-btn" data-jump-tab="tab-inspect">
+              <svg class="icon icon-sm" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+              Diagnostics Overview
+            </button>
+            <div class="station-header-title">
+              <h2>About Aegis &amp; Project Support</h2>
+              <p>Offline architecture principles, zero-trace execution mode, and donation options</p>
+            </div>
+          </div>
+        </div>
+
         <div class="about-grid">
           <div class="card-box">
             <h2>About Aegis Laptop Diagnostics</h2>
@@ -875,8 +1215,33 @@
         Click or press Space to change color. Press ESC to exit.
       </div>
     </div>
+
+    <!-- Persistent Mode & Offline Status Strip -->
+    <footer class="mode-indicator-strip" role="status" aria-live="polite">
+      <div class="strip-item strip-local">
+        <span class="strip-dot"></span>
+        <span id="stripModeText">100% AIR-GAPPED OFFLINE</span>
+      </div>
+      <span class="strip-sep">|</span>
+      <div class="strip-item">
+        <span id="stripExpertIndicator">NORMAL BUYER LENS</span>
+      </div>
+      <span class="strip-sep">|</span>
+      <div class="strip-item">
+        <span>ZERO HOST TRACE</span>
+      </div>
+      <span class="strip-sep">|</span>
+      <div class="strip-item">
+        <span>Xflash v3.0.0</span>
+      </div>
+      <div class="strip-shortcuts" style="margin-left:auto; display:flex; gap:12px; font-size:0.68rem; opacity:0.8;">
+        <span><kbd>Ctrl</kbd>+<kbd>K</kbd> Command Palette</span>
+        <span><kbd>Alt</kbd>+<kbd>E</kbd> Expert Mode</span>
+      </div>
+    </footer>
   </div>
 
+  <script src="gsap.min.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
