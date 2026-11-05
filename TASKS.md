@@ -113,3 +113,12 @@ Use this as the source-of-truth task list when working with Antigravity. Mark it
 - [x] Update web dashboard references and API metadata to reflect `PixelApprentice/xflash`.
 - [x] Provide `start-xflash.bat` alongside `start-aegis.bat` and `run-portable.sh` with `XFLASH_PORTABLE` environment variable support.
 - [x] Verify all 71 unit and E2E browser tests continue to pass.
+
+## Phase 10 — Standalone Terminal CLI & Clean-OS Shop Portability
+
+- [x] Terminal CLI Suite: Added `xflash scan` / `xflash inspect` with live hardware probe and 3-part finding card formatting.
+- [x] Seller Claim Flags: Added `--claim-model`, `--claim-ram`, `--claim-storage`, `--claim-cpu`, `--claim-price`, `--url` CLI arguments.
+- [x] Terminal ANSI/ASCII UI Formatter: Implemented `src/laptop_inspector/cli_ui.py` with automatic color suppression (`NO_COLOR` / dumb terminal support).
+- [x] Clean-OS Used Shop Solution: Created `tools/prepare_offline_usb.py`, `prepare-usb.sh`, and `prepare-usb.bat` to bundle Windows Embeddable Python (~10MB) directly onto USB drives.
+- [x] In-Store Inspection Documentation: Authored `docs/offline-shop-inspection-guide.md` explaining USB execution on clean-wiped Windows 8/10/11 and Linux laptops with zero host installation.
+- [x] Regression & Unit Testing: Added `tests/test_cli.py` covering parser arguments, live/snapshot scans, clean vs discrepancy states, and JSON/HTML exports (77 total tests all passing).

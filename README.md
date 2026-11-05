@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/PixelApprentice/xflash/actions"><img src="https://img.shields.io/badge/tests-71%20passed-success?style=flat-square" alt="Tests"></a>
+  <a href="https://github.com/PixelApprentice/xflash/actions"><img src="https://img.shields.io/badge/tests-77%20passed-success?style=flat-square" alt="Tests"></a>
   <a href="https://github.com/PixelApprentice/xflash/releases"><img src="https://img.shields.io/badge/version-3.0.0-blue?style=flat-square" alt="Version"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="License"></a>
   <a href="https://python.org"><img src="https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue?style=flat-square" alt="Python"></a>
@@ -151,15 +151,33 @@ Open **`http://127.0.0.1:8080`**:
 - Review findings in **Normal Mode** or switch to **Advanced Mode** for register telemetry.
 - Click **Print / PDF Certificate** to generate an inspection certificate.
 
-### 2. Command-Line Analysis
-Run headless inspection directly from the terminal:
+### 2. Terminal CLI Diagnostic Inspection
+Run live or snapshot inspection directly in the terminal without opening a browser:
 ```bash
-# Formatted JSON output to stdout:
-xflash examples/sample_session.json --format json
+# 1. Instant live hardware scan on the current machine:
+xflash scan
 
-# Export standalone HTML report:
-xflash examples/sample_session.json --format html --output report.html
+# 2. Reconcile against seller listing claims with colored 3-part finding cards:
+xflash scan --claim-ram 16 --claim-storage 512 --claim-model "ThinkPad T14"
+
+# 3. Export an offline HTML or JSON report from terminal:
+xflash scan --claim-ram 16 --export-html aegis_reports/inspection.html
+
+# 4. Analyze pre-recorded snapshot files:
+xflash analyze examples/sample_session.json
+xflash analyze examples/sample_session.json --format json
 ```
+
+### 3. Clean-OS Used Laptop Shop Inspections (Zero Host Python)
+Target shop laptops that were clean-wiped or reset don't need Python installed! Prepare your USB drive once at home:
+```bash
+# On Linux/macOS:
+./prepare-usb.sh
+
+# On Windows:
+prepare-usb.bat
+```
+This bundles the official ~10 MB Windows Embeddable runtime onto the USB drive. When plugged into ANY Windows 8, 10, or 11 laptop in a store, double-clicking `start-xflash.bat` boots Xflash immediately with **zero installation** on the store computer. See the full [**In-Store Shop Inspection Guide**](docs/offline-shop-inspection-guide.md).
 
 ---
 
@@ -183,11 +201,12 @@ Xflash maintains a strict test suite covering edge cases, invalid telemetry, and
 pip install -e ".[test]"
 playwright install chromium
 
-# Run all 71 unit and E2E browser tests:
+# Run all 77 unit, CLI, and E2E browser tests:
 .venv/bin/python -m unittest discover -s tests -v
 ```
 
 ### Coverage Highlights:
+- **`CLITests` (6 tests):** Terminal ANSI/ASCII report rendering, live and snapshot terminal execution (`xflash scan`), JSON/HTML report export formatting, clean vs discrepancy states.
 - **`BatteryTests` (9 tests):** Degradation thresholds, low-cycle discrepancies, zero full charge capacity (`critical`), negative/implausible cycles, above-design tolerances.
 - **`StorageTests` (8 tests):** Low-wear media errors, NVMe critical warning bitmask decoding, invalid negative counters, decimal GB vs. binary GiB alignment.
 - **`MemoryTests` (5 tests):** Material RAM shortfalls, hardware-reserved VRAM tolerance, zero-byte invalid memory handling.
