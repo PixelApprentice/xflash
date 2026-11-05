@@ -389,3 +389,21 @@ def run_server(
         print("\nShutting down server cleanly...")
     finally:
         server.server_close()
+
+
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Run Xflash local diagnostic server")
+    parser.add_argument("--host", default="127.0.0.1", help="Host interface to bind (default: 127.0.0.1)")
+    parser.add_argument("--port", type=int, default=8080, help="Port to listen on (default: 8080)")
+    parser.add_argument("--portable", action="store_true", help="Run in zero-trace USB portable mode")
+    parser.add_argument("--no-browser", action="store_true", help="Do not automatically launch web browser")
+    cli_args = parser.parse_args()
+
+    run_server(
+        host=cli_args.host,
+        port=cli_args.port,
+        portable=cli_args.portable,
+        open_browser=not cli_args.no_browser,
+    )

@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Xflash Laptop Diagnostics
+GenericName=Hardware Diagnostics & Buyer Assurance
+Comment=Check before you pay - Offline hardware inspection tool for used laptops
+Exec=sh -c '"$(dirname "%k")/run-portable.sh"'
+Icon=utilities-system-monitor
+Terminal=true
+Categories=System;HardwareSettings;Utility;
+Keywords=hardware;diagnostic;laptop;battery;smart;xflash;
+StartupNotify=true

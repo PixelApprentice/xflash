@@ -139,11 +139,10 @@ pip install -e .
 
 ### 1. Launch the Interactive Dashboard
 ```bash
-# Start local server and open browser
-xflash serve --port 8080
-
-# Or run directly via python module
-python3 -m laptop_inspector.cli serve --port 8080
+# Start local server and open browser (any of these work):
+./xflash serve --port 8080
+python3 run.py --port 8080
+python3 -m laptop_inspector.web.server --port 8080
 ```
 Open **`http://127.0.0.1:8080`**:
 - Press **`Ctrl+K`** to open the Command Palette.

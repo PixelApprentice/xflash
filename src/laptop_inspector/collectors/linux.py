@@ -809,7 +809,13 @@ class LinuxCollector:
 
         # 2. Debian/Ubuntu /var/log/installer/syslog or dpkg.log
         if not install_dt:
-            for log_p in [Path("/var/log/installer/syslog"), Path("/var/log/dpkg.log")]:
+            for log_p in [
+                Path("/var/log/installer/syslog"),
+                Path("/var/log/dpkg.log"),
+                Path("/var/log/anaconda/anaconda.log"),  # Fedora/RHEL
+                Path("/var/log/dnf.log"),               # Fedora/CentOS
+                Path("/var/log/zypp/history"),          # openSUSE
+            ]:
                 if log_p.is_file():
                     try:
                         mtime = log_p.stat().st_mtime

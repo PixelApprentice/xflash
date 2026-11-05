@@ -387,7 +387,7 @@ class App {
     const btn = document.getElementById("autoDetectBtn");
     const origHtml = btn.innerHTML;
     btn.disabled = true;
-    btn.innerText = "⚡ Probing Hardware...";
+    btn.innerText = "⚡ Probing Hardware…";
 
     try {
       const resp = await fetch("/api/probe");
@@ -494,7 +494,7 @@ class App {
     const btn = document.getElementById("runLiveBtn");
     const originalText = btn.innerHTML;
     btn.disabled = true;
-    btn.innerText = "Querying Live Hardware...";
+    btn.innerText = "Querying Live Hardware…";
 
     const claims = this.getClaimsInput();
     const notes = document.getElementById("operatorNotes").value.trim();
@@ -638,7 +638,7 @@ class App {
     const btn = document.getElementById("saveUsbReportBtn");
     const status = document.getElementById("saveUsbReportStatus");
     if (btn) btn.disabled = true;
-    if (status) status.textContent = "Writing report to USB storage...";
+    if (status) status.textContent = "Writing report to USB storage…";
 
     try {
       const resp = await fetch("/api/export/portable", {
@@ -1050,7 +1050,7 @@ class App {
           <button type="button" class="check-btn ${current.status === 'failed' ? 'active-fail' : ''}" data-val="failed">FAIL</button>
           <button type="button" class="check-btn" data-val="not_applicable">N/A</button>
         </div>
-        <input type="text" class="check-notes-input" placeholder="Optional operator notes..." value="${current.notes || ''}" />
+        <input type="text" class="check-notes-input" placeholder="Optional operator notes…" value="${current.notes || ''}" />
       `;
 
       const input = item.querySelector(".check-notes-input");
@@ -1226,11 +1226,11 @@ class App {
     });
 
     leftBtn.addEventListener("click", () => {
-      this.testSpeakerChannel(-1, "Left Speaker Playing...");
+      this.testSpeakerChannel(-1, "Left Speaker Playing…");
     });
 
     rightBtn.addEventListener("click", () => {
-      this.testSpeakerChannel(1, "Right Speaker Playing...");
+      this.testSpeakerChannel(1, "Right Speaker Playing…");
     });
   }
 
@@ -1303,7 +1303,7 @@ class App {
     const sweepBtn = document.getElementById("sweepToneBtn");
     const origText = sweepBtn.textContent;
     sweepBtn.disabled = true;
-    sweepBtn.textContent = "Sweeping (20Hz–2000Hz)...";
+    sweepBtn.textContent = "Sweeping (20Hz–2000Hz)…";
 
     const osc = this.audioCtx.createOscillator();
     const gain = this.audioCtx.createGain();
@@ -1344,7 +1344,7 @@ class App {
 
     const targetBtn = pan === -1 ? leftBtn : rightBtn;
     const origText = targetBtn.textContent;
-    targetBtn.textContent = "Testing...";
+    targetBtn.textContent = "Testing…";
 
     setTimeout(() => {
       this.stopAudioTone();
@@ -1373,7 +1373,7 @@ class App {
 
     try {
       startBtn.disabled = true;
-      startBtn.textContent = "Requesting Device Access...";
+      startBtn.textContent = "Requesting Device Access…";
 
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { width: { ideal: 1280 }, height: { ideal: 720 } },
@@ -1572,7 +1572,7 @@ class App {
       try {
         canvas.releasePointerCapture(e.pointerId);
       } catch (_) {}
-      updateStatus(this.activePointers.size > 0 ? "Tracking..." : "Finger released", 0);
+      updateStatus(this.activePointers.size > 0 ? "Tracking…" : "Finger released", 0);
     };
 
     canvas.addEventListener("pointerup", release);
@@ -1649,7 +1649,7 @@ class App {
     this.verifiedKeys.clear();
     document.querySelectorAll(".key.tested").forEach(k => k.classList.remove("tested", "pressed"));
     document.getElementById("kbVerifiedCount").innerText = "0";
-    document.getElementById("lastKeyPressed").innerText = "Press any key to begin verification...";
+    document.getElementById("lastKeyPressed").innerText = "Press any key to begin verification…";
   }
 
   // --------------------------------------------------------------------------
@@ -1749,7 +1749,7 @@ class App {
                   <span class="port-speed-pill ${isConnected ? 'pill-green' : ''}">${(c.status || "DISCONNECTED").toUpperCase()}</span>
                 </div>
                 ${c.resolution ? `<div class="text-muted" style="font-size:0.75rem; margin-top:0.3rem;">Active Resolution: <strong>${c.resolution}</strong></div>` : ""}
-                ${c.modes && c.modes.length ? `<div class="text-muted" style="font-size:0.75rem; margin-top:0.2rem;">Supported: ${c.modes.slice(0, 3).join(", ")}${c.modes.length > 3 ? "..." : ""}</div>` : ""}
+                ${c.modes && c.modes.length ? `<div class="text-muted" style="font-size:0.75rem; margin-top:0.2rem;">Supported: ${c.modes.slice(0, 3).join(", ")}${c.modes.length > 3 ? "…" : ""}</div>` : ""}
               </div>
             `;
           }).join("");
@@ -2062,7 +2062,7 @@ class App {
   async setFanProfile(profile) {
     const badge = document.getElementById("currentFanProfileBadge");
     const msg = document.getElementById("fanProfileStatusMsg");
-    if (msg) msg.textContent = `Switching fan mode to '${profile}'...`;
+    if (msg) msg.textContent = `Switching fan mode to '${profile}'…`;
     try {
       const resp = await fetch("/api/fan/profile", {
         method: "POST",
@@ -2121,7 +2121,7 @@ class App {
     if (!runBtn) return;
     const origText = runBtn.innerHTML;
     runBtn.disabled = true;
-    runBtn.innerHTML = "⏳ Running 5-second thermal pulse...";
+    runBtn.innerHTML = "⏳ Running 5-second thermal pulse…";
 
     const peakEl = document.getElementById("benchPeakTempVal");
     const startEl = document.getElementById("benchStartTemp");
@@ -2129,7 +2129,7 @@ class App {
     const rampEl = document.getElementById("benchRampRate");
     const statusEl = document.getElementById("benchStatusBadge");
 
-    if (peakEl) peakEl.textContent = "...°C";
+    if (peakEl) peakEl.textContent = "…°C";
 
     try {
       const resp = await fetch("/api/benchmark/cpu-pulse", {

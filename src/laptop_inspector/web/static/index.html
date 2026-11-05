@@ -3,10 +3,14 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0D1117">
+  <meta name="color-scheme" content="dark">
   <title>Xflash (Aegis) v3.0 — Offline Hardware Assurance &amp; Spec Check</title>
   <link rel="stylesheet" href="app.css">
 </head>
 <body>
+  <a href="#mainContent" class="skip-link">Skip to main content</a>
+
   <!-- Boot Splash (Xflash signature moment: open ring fills as engine initializes) -->
   <div id="xflashSplash" class="xflash-splash" aria-hidden="true" role="presentation">
     <div class="splash-content">
@@ -24,8 +28,8 @@
   <div id="cmdPaletteOverlay" class="cmd-palette-overlay" role="dialog" aria-modal="true" aria-label="Command Palette">
     <div class="cmd-palette" id="cmdPaletteBox">
       <div class="cmd-input-row">
-        <svg class="cmd-input-icon icon-sm" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input type="text" id="cmdPaletteInput" class="cmd-input" placeholder="Jump to studio or test (e.g. Screen, Ports, Input, Cooling, Export)..." autocomplete="off" spellcheck="false" />
+        <svg class="cmd-input-icon icon-sm" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="cmdPaletteInput" class="cmd-input" placeholder="Jump to studio or test (e.g. Screen, Ports, Input, Cooling, Export)…" autocomplete="off" spellcheck="false" />
         <span class="cmd-shortcuts">ESC</span>
       </div>
       <div class="cmd-results" id="cmdResults" role="listbox"></div>
@@ -117,7 +121,7 @@
     </header>
 
     <!-- Main Content -->
-    <main class="main-content">
+    <main id="mainContent" class="main-content">
       <!-- ============================================================== -->
       <!-- TAB 1: DIAGNOSTICS & HARDWARE INSPECTION                       -->
       <!-- ============================================================== -->
@@ -215,7 +219,7 @@
               <div class="form-group" id="listingUrlGroup">
                 <label for="listingUrlInput">Listing URL or Marketplace Link (Optional)</label>
                 <div style="display:flex; gap:0.4rem;">
-                  <input type="url" id="listingUrlInput" placeholder="https://marketplace.example/item/123..." />
+                  <input type="url" id="listingUrlInput" placeholder="https://marketplace.example/item/123…" autocomplete="off" />
                   <button type="button" id="parseListingBtn" class="btn btn-secondary btn-sm" title="Record listing reference offline (zero network transmission)">Save URL</button>
                 </div>
                 <span class="field-hint" style="font-size:0.68rem; color:var(--text-muted); display:block; margin-top:2px;">Stored locally with report — zero network lookup.</span>
@@ -223,23 +227,23 @@
 
               <div class="form-group">
                 <label for="claimModel">Listing Model Claim</label>
-                <input type="text" id="claimModel" placeholder="e.g. Vivobook X1505ZA / ThinkPad T14" />
+                <input type="text" id="claimModel" placeholder="e.g. Vivobook X1505ZA / ThinkPad T14" autocomplete="off" />
               </div>
 
               <div class="form-row">
                 <div class="form-group">
                   <label for="claimRam">RAM (GiB)</label>
-                  <input type="number" id="claimRam" placeholder="16" step="1" min="1" />
+                  <input type="number" id="claimRam" placeholder="16" step="1" min="1" autocomplete="off" />
                 </div>
                 <div class="form-group">
                   <label for="claimStorage">Storage (GB)</label>
-                  <input type="number" id="claimStorage" placeholder="512" step="1" min="1" />
+                  <input type="number" id="claimStorage" placeholder="512" step="1" min="1" autocomplete="off" />
                 </div>
               </div>
 
               <div class="form-group">
                 <label for="claimCpu">CPU Specification</label>
-                <input type="text" id="claimCpu" placeholder="e.g. 12th Gen Intel Core i7-1255U" />
+                <input type="text" id="claimCpu" placeholder="e.g. 12th Gen Intel Core i7-1255U" autocomplete="off" />
               </div>
 
               <div class="form-group">
@@ -325,7 +329,7 @@
                       <span class="verdict-label">HARDWARE ASSURANCE VERDICT</span>
                       <span id="verdictBadge" class="badge">ANALYZING</span>
                     </div>
-                    <h2 id="verdictTitle">Checking hardware state...</h2>
+                    <h2 id="verdictTitle">Checking hardware state…</h2>
                     <p id="verdictSummary" class="text-muted"></p>
                     <div class="verdict-meta">
                       <span id="sessionMetaId">Session: -</span>
@@ -969,7 +973,7 @@
               💡 <strong>Switch Wiggle &amp; Chatter Test:</strong> Gently wiggle or tap suspected keys halfway down. If a switch chatters rapidly or bounces (&lt;35ms), it illuminates with a red pulse and logs below.
             </div>
 
-            <div id="lastKeyPressed" class="key-monitor">Press any key to begin verification...</div>
+            <div id="lastKeyPressed" class="key-monitor">Press any key to begin verification…</div>
 
             <div class="keyboard-wrapper">
               <div id="virtualKeyboard" class="keyboard"></div>

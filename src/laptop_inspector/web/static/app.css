@@ -112,6 +112,39 @@
   padding: 0;
 }
 
+html {
+  color-scheme: dark;
+  touch-action: manipulation;
+}
+
+@media (pointer: fine) {
+  html {
+    overscroll-behavior: none;
+  }
+}
+
+.skip-link {
+  position: absolute;
+  top: -60px;
+  left: 10px;
+  background: var(--primary);
+  color: #ffffff;
+  padding: 8px 16px;
+  z-index: 100000;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  text-decoration: none;
+  transition: top 0.15s ease;
+}
+
+.skip-link:focus {
+  top: 10px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  text-wrap: balance;
+}
+
 body {
   font-family: var(--font-sans);
   background-color: var(--bg-primary);
@@ -246,7 +279,7 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
-  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: color 0.15s ease, background-color 0.15s ease;
   white-space: nowrap;
   user-select: none;
 }
@@ -394,7 +427,7 @@ input:checked + .slider:before {
   cursor: pointer;
   padding: 0.35rem 0.6rem;
   border-radius: var(--radius-md);
-  transition: all 0.15s ease;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
   user-select: none;
   white-space: nowrap;
 }
@@ -415,7 +448,7 @@ input:checked + .slider:before {
   background: var(--bg-subtle);
   color: var(--text-muted);
   border: 1px solid var(--border-color);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
   flex-shrink: 0;
 }
 
@@ -644,7 +677,7 @@ input:checked + .slider:before {
   border-radius: var(--radius-md);
   cursor: pointer;
   border: 1px solid transparent;
-  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: color 0.15s ease, background-color 0.15s ease;
   text-decoration: none;
   user-select: none;
 }
@@ -1020,7 +1053,7 @@ input:checked + .slider:before {
   border-radius: var(--radius-sm);
   color: var(--text-main);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
   user-select: none;
 }
 
@@ -1103,7 +1136,7 @@ input:checked + .slider:before {
   cursor: pointer;
   margin-bottom: -1px;
   white-space: nowrap;
-  transition: all 0.15s ease;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
 .subnav-btn:hover {
@@ -1269,7 +1302,7 @@ input:checked + .slider:before {
   color: var(--text-main);
   border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
 .check-btn:hover {
@@ -1623,7 +1656,7 @@ input:checked + .slider:before {
   font-size: 0.75rem;
   font-weight: 600;
   color: var(--text-muted);
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
   user-select: none;
 }
 
@@ -1715,7 +1748,7 @@ input:checked + .slider:before {
   font-size: 0.75rem;
   font-weight: 600;
   color: var(--text-main);
-  transition: all 0.1s ease;
+  transition: background-color 0.1s ease, border-color 0.1s ease, transform 0.1s ease;
 }
 
 .key.w-15 { flex: 1.5; }
@@ -2199,7 +2232,7 @@ input:checked + .slider:before {
   fill: var(--bg-surface);
   stroke: var(--border-color);
   stroke-width: 1.5;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
 .schematic-zone:hover {

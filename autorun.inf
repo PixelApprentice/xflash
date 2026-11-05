@@ -1,15 +1,13 @@
-; Aegis Laptop Diagnostics - USB Portable Autorun (Windows)
-; -------------------------------------------------------
-; When Aegis is installed on a USB drive, Windows will show
-; an AutoPlay prompt offering to "Run Aegis Diagnostics".
-; This file is ignored on Linux/macOS (safe to have present).
-;
-; SECURITY NOTE: autorun.inf is disabled by default in Windows 7+.
-; The USB AutoPlay prompt requires the user to click "Allow" — no
-; silent execution occurs without user consent.
+; Xflash Laptop Diagnostics - USB Portable AutoRun Configuration
+; -----------------------------------------------------------------
+; When inserted on Windows 8, 10, 11, this configures the drive's
+; label, icon, and right-click AutoPlay action in Windows Explorer.
+; -----------------------------------------------------------------
 
 [autorun]
-open=start-aegis.bat
+open=start-xflash.bat
 icon=aegis.ico
-label=Aegis Laptop Diagnostics
-action=Run Aegis Laptop Diagnostics
+label=Xflash Hardware Diagnostics (Run Me)
+action=Run Xflash Laptop Diagnostics
+shell\run=Run Xflash Diagnostics
+shell\run\command=start-xflash.bat
