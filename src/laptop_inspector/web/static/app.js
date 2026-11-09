@@ -576,6 +576,12 @@ class App {
     const risk = report.risk_state || "unknown";
 
     // Verdict Banner
+    const verdictBannerEl = document.getElementById("verdictBanner");
+    if (verdictBannerEl) {
+      verdictBannerEl.classList.remove("analyzed");
+      void verdictBannerEl.offsetWidth;
+      verdictBannerEl.classList.add("analyzed");
+    }
     const badge = document.getElementById("verdictBadge");
     const title = document.getElementById("verdictTitle");
     const summary = document.getElementById("verdictSummary");
@@ -781,6 +787,7 @@ class App {
     findings.forEach((f, idx) => {
       const card = document.createElement("div");
       card.className = `finding-card ${f.severity || "info"}`;
+      card.style.setProperty("--card-stagger", Math.min(idx, 8).toString());
 
       // Derive buyer leverage / impact note (Why It Matters)
       let impactNote = "Component operates within standard specifications.";
@@ -828,7 +835,7 @@ class App {
           </button>
         </div>
 
-        <pre id="ev-${idx}" class="code-block" style="display:none; margin-top:0.5rem;">${JSON.stringify({ evidence: f.evidence, confidence: f.confidence, source: f.source }, null, 2)}</pre>
+        <pre id="ev-${idx}" class="code-block evidence-block" style="display:none; margin-top:0.5rem;">${JSON.stringify({ evidence: f.evidence, confidence: f.confidence, source: f.source }, null, 2)}</pre>
       `;
 
       card.querySelector(".evidence-toggle").addEventListener("click", (e) => {
