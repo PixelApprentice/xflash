@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#faf9f5">
   <meta name="color-scheme" content="light dark">
-  <title>Xflash (Aegis) v3.0 — The Honest Hardware Standard · Anthropic Editorial Edition</title>
+  <title>Xflash (Aegis) v3.1 — The Honest Hardware Standard · Anthropic Editorial Edition</title>
   <link rel="stylesheet" href="app.css">
 </head>
 <body>
@@ -63,7 +63,7 @@
           </div>
           <div class="brand-text">
             <span class="brand-title">Xflash <span style="font-weight:400; opacity:0.8; font-size:0.9em;">· Aegis Diagnostics</span></span>
-            <span class="brand-tag">The Honest Hardware Standard · Offline v3.0</span>
+            <span class="brand-tag">The Honest Hardware Standard · Offline v3.1</span>
           </div>
         </div>
 
@@ -130,6 +130,14 @@
 
     <!-- Main Content -->
     <main id="mainContent" class="main-content">
+      <!-- Version Update Notice (v3.1.0) -->
+      <div id="versionUpdateNotice" class="version-update-banner" role="status">
+        <div class="vnotice-content">
+          <span class="vnotice-pill">v3.1.0 Released</span>
+          <span class="vnotice-text">Windows &amp; Linux cross-platform support, multi-core dynamic cooling pulse, and keyboard scissor-switch corner angle verification.</span>
+        </div>
+        <button type="button" id="dismissVNoticeBtn" class="btn btn-sm btn-icon vnotice-close" title="Dismiss update notice" aria-label="Dismiss update notice">✕</button>
+      </div>
       <!-- ============================================================== -->
       <!-- TAB 1: DIAGNOSTICS & HARDWARE INSPECTION                       -->
       <!-- ============================================================== -->
@@ -191,8 +199,8 @@
             <!-- Host Environment & Clean Install Detection Card -->
             <div id="hostMetaBanner" class="host-meta-banner" style="display:none;">
               <div class="host-meta-title">
-                <span>⚡ Host Environment &amp; OS Metadata</span>
-                <span id="hostWipeTag" class="badge status-passed" style="margin-left:auto; font-size:0.65rem;">ESTABLISHED</span>
+                <span>System Context &amp; OS</span>
+                <span id="hostWipeTag" class="badge status-passed" style="margin-left:auto; font-size:0.68rem;">Verified</span>
               </div>
               <div class="host-meta-grid">
                 <div class="host-meta-item">
@@ -214,12 +222,12 @@
               </div>
             </div>
 
-            <!-- Optional Seller Listing Claims Module (Intentional Opt-In) -->
+            <!-- Optional Seller Listing Claims Module -->
             <div class="listing-toggle-wrapper" style="margin-bottom:0.75rem;">
               <button type="button" id="listingToggleBtn" class="listing-toggle-btn" aria-expanded="true" aria-controls="claimsForm" style="display:flex; align-items:center; gap:8px; width:100%; padding:0.5rem 0.75rem; background:var(--bg-subtle); border:1px solid var(--border-color); border-radius:var(--radius-sm); font-size:0.8rem; font-weight:600; cursor:pointer;">
                 <svg class="icon icon-sm" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-                <span>Seller Listing (Optional Opt-In)</span>
-                <span id="listingStateBadge" class="badge status-passed" style="font-size:0.6rem; margin-left:auto;">OPT-IN</span>
+                <span>Seller Listing Claims (Optional)</span>
+                <span id="listingStateBadge" class="badge status-passed" style="font-size:0.6rem; margin-left:auto;">Active</span>
               </button>
             </div>
 
@@ -334,7 +342,7 @@
                 <div class="verdict-top-row">
                   <div class="verdict-main">
                     <div class="verdict-header">
-                      <span class="verdict-label">HARDWARE ASSURANCE VERDICT</span>
+                      <span class="verdict-label">Inspection Verdict</span>
                       <span id="verdictBadge" class="badge">ANALYZING</span>
                       <div id="verdictLottieAperture" class="lottie-aperture-burst" aria-hidden="true" title="Hardware Analysis Verified">
                         <svg viewBox="0 0 36 36" class="lottie-aperture-svg">
@@ -407,7 +415,7 @@
                     <svg class="icon icon-sm" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
                     <h3 style="margin:0; font-size:0.95rem;">Interactive Hardware Topology Map</h3>
                   </div>
-                  <span id="schematicOverallBadge" class="badge status-passed" style="font-size:0.65rem;">HARDWARE TOPOLOGY ACTIVE</span>
+                  <span id="schematicOverallBadge" class="badge status-passed" style="font-size:0.65rem;">Hardware Overview</span>
                 </div>
                 <p class="text-muted" style="font-size:0.78rem; margin-bottom:0.75rem;">Spatial component overview. Click any hardware module below to inspect its dedicated diagnostics or sensor registers.</p>
                 <div class="schematic-svg-wrapper" style="overflow-x:auto;">
@@ -450,6 +458,51 @@
                     <rect x="372" y="236" width="128" height="28" rx="4" class="schematic-zone zone-healthy" id="schematic-battery" data-target-subtab="subtab-expert" style="cursor:pointer;" />
                     <text class="schematic-label" x="436" y="253" id="schematic-battery-text" text-anchor="middle" font-size="9" font-weight="700" fill="currentColor">BATTERY PACK</text>
                   </svg>
+                </div>
+              </div>
+
+              <!-- Buyer Mode: Glanceable Hardware Assessment -->
+              <div id="beginnerSummaryCards" class="beginner-summary-cards">
+                <div class="beginner-summary-header">
+                  <div>
+                    <span class="beginner-section-label">Buyer Assessment</span>
+                    <h3>Core Hardware Health Summary</h3>
+                  </div>
+                  <span class="text-muted" style="font-size:0.8rem;">Glanceable plain-language verdicts · Switch to Expert for low-level registers</span>
+                </div>
+                <div class="beginner-card-grid">
+                  <div class="beginner-card" id="bCardBattery">
+                    <div class="bcard-top">
+                      <span class="bcard-icon">🔋</span>
+                      <span class="bcard-tag" id="bCardBatteryTag">Battery</span>
+                    </div>
+                    <h4 id="bCardBatteryTitle">Checking battery…</h4>
+                    <p id="bCardBatteryDetail" class="bcard-desc">Evaluates usable capacity and wear against original factory design.</p>
+                  </div>
+                  <div class="beginner-card" id="bCardStorage">
+                    <div class="bcard-top">
+                      <span class="bcard-icon">💾</span>
+                      <span class="bcard-tag" id="bCardStorageTag">Storage</span>
+                    </div>
+                    <h4 id="bCardStorageTitle">Checking SSD…</h4>
+                    <p id="bCardStorageDetail" class="bcard-desc">Validates internal NVMe/SATA health, endurance usage, and read stability.</p>
+                  </div>
+                  <div class="beginner-card" id="bCardClaims">
+                    <div class="bcard-top">
+                      <span class="bcard-icon">📋</span>
+                      <span class="bcard-tag" id="bCardClaimsTag">Listing Specs</span>
+                    </div>
+                    <h4 id="bCardClaimsTitle">Checking claims…</h4>
+                    <p id="bCardClaimsDetail" class="bcard-desc">Compares RAM, CPU, and disk size against seller listing claims.</p>
+                  </div>
+                  <div class="beginner-card" id="bCardThermals">
+                    <div class="bcard-top">
+                      <span class="bcard-icon">❄️</span>
+                      <span class="bcard-tag" id="bCardThermalsTag">Thermals</span>
+                    </div>
+                    <h4 id="bCardThermalsTitle">Checking thermals…</h4>
+                    <p id="bCardThermalsDetail" class="bcard-desc">Monitors processor temperature and cooling dissipation headroom.</p>
+                  </div>
                 </div>
               </div>
 
@@ -588,7 +641,7 @@
                   <div class="card-box" style="grid-column: 1 / -1;">
                     <div class="sidebar-header">
                       <h4>Operating System, Clean Wipe &amp; Display Panel Telemetry</h4>
-                      <span id="refurbishVerdictBadge" class="badge status-passed">OS METADATA VERIFIED</span>
+                      <span id="refurbishVerdictBadge" class="badge status-passed">OS Details</span>
                     </div>
                     <table class="table table-sm">
                       <tbody id="expertOsRefurbishTable"></tbody>
@@ -682,6 +735,18 @@
               <p class="text-muted">Wi-Fi interface chip and Bluetooth hardware controller status.</p>
               <div id="networkStatusBox" style="margin-top:0.75rem;"></div>
             </div>
+          </div>
+        </div>
+
+        <!-- Station Flow Footer -->
+        <div class="station-flow-footer">
+          <div class="flow-step-tracker">
+            <span class="flow-step-label">Station 1 of 5</span>
+            <span class="flow-step-name">Ports &amp; Connectors</span>
+          </div>
+          <div class="flow-actions">
+            <button type="button" class="btn btn-outline" data-flow-jump="tab-inspect">← Overview</button>
+            <button type="button" class="btn btn-primary" data-flow-jump="tab-screen">Next: Screen Studio →</button>
           </div>
         </div>
       </section>
@@ -811,6 +876,18 @@
             </div>
           </div>
         </div>
+
+        <!-- Station Flow Footer -->
+        <div class="station-flow-footer">
+          <div class="flow-step-tracker">
+            <span class="flow-step-label">Station 2 of 5</span>
+            <span class="flow-step-name">Screen &amp; Display Studio</span>
+          </div>
+          <div class="flow-actions">
+            <button type="button" class="btn btn-outline" data-flow-jump="tab-ports">← Previous: Ports</button>
+            <button type="button" class="btn btn-primary" data-flow-jump="tab-media">Next: Audio &amp; Camera →</button>
+          </div>
+        </div>
       </section>
 
       <!-- ============================================================== -->
@@ -901,6 +978,18 @@
             </div>
           </div>
         </div>
+
+        <!-- Station Flow Footer -->
+        <div class="station-flow-footer">
+          <div class="flow-step-tracker">
+            <span class="flow-step-label">Station 3 of 5</span>
+            <span class="flow-step-name">Audio &amp; Camera</span>
+          </div>
+          <div class="flow-actions">
+            <button type="button" class="btn btn-outline" data-flow-jump="tab-screen">← Previous: Screen</button>
+            <button type="button" class="btn btn-primary" data-flow-jump="tab-input">Next: Input &amp; Trackpad →</button>
+          </div>
+        </div>
       </section>
 
       <!-- ============================================================== -->
@@ -976,20 +1065,31 @@
             <div class="kb-header">
               <div>
                 <h3>Interactive Laptop Keyboard Matrix</h3>
-                <p class="text-muted">Press every key switch on the laptop keyboard. Functioning keys illuminate green and remain verified.</p>
+                <p class="text-muted">Dual-actuation verification: test center strike, corner &amp; side angle stability, and high-speed rollover.</p>
               </div>
-              <div class="kb-stats">
-                <span class="stat-num" id="kbVerifiedCount">0</span>
-                <span class="stat-label">Keys Verified</span>
+              <div class="kb-stats-group">
+                <div class="kb-stat-box">
+                  <span class="stat-num" id="kbVerifiedCount">0</span>
+                  <span class="stat-label">Keys Hit</span>
+                </div>
+                <div class="kb-stat-box">
+                  <span class="stat-num" id="kbCornerVerifiedCount">0</span>
+                  <span class="stat-label">Corner Verified</span>
+                </div>
+                <button type="button" id="kbAngleModeBtn" class="btn btn-sm btn-secondary" title="Requires dual strike (center + off-center corner) to verify scissor mechanism stability">Corner Check: ON</button>
                 <button type="button" id="kbResetBtn" class="btn btn-sm btn-outline">Reset Matrix</button>
               </div>
             </div>
 
-            <div class="kb-test-tips" style="font-size:0.8rem; color:var(--text-muted); margin-bottom:0.5rem; background:var(--bg-subtle); padding:0.5rem 0.75rem; border-radius:4px; border-left:3px solid var(--primary);">
-              💡 <strong>Switch Wiggle &amp; Chatter Test:</strong> Gently wiggle or tap suspected keys halfway down. If a switch chatters rapidly or bounces (&lt;35ms), it illuminates with a red pulse and logs below.
+            <div class="kb-test-tips" style="font-size:0.8rem; color:var(--text-muted); margin-bottom:0.5rem; background:var(--bg-subtle); padding:0.6rem 0.85rem; border-radius:var(--radius-sm); border-left:3px solid var(--primary);">
+              <strong>Inspection Tip:</strong> Press each key once dead-center (turns amber/pending), then strike key corner or side angle (turns solid green). Fast burst typing is measured for matrix rollover without false bounce errors.
             </div>
 
-            <div id="lastKeyPressed" class="key-monitor">Press any key to begin verification…</div>
+            <div class="kb-status-row">
+              <div id="lastKeyPressed" class="key-monitor flex-1">Press any key to begin verification…</div>
+              <div id="kbRolloverLive" class="kb-metric-badge">Rollover: 0 keys held (Clean)</div>
+              <div id="kbCadenceLive" class="kb-metric-badge">Cadence: 0 keys/sec</div>
+            </div>
 
             <div class="keyboard-wrapper">
               <div id="virtualKeyboard" class="keyboard"></div>
@@ -997,8 +1097,20 @@
 
             <!-- Keyboard Condition Heatmap Report -->
             <div id="kbConditionReport" class="kb-condition-report" style="margin-top:0.75rem; padding:0.75rem; background:var(--card-bg); border-radius:6px; border:1px solid var(--border-color); font-size:0.82rem;">
-              <span class="text-muted">Press keys to build the condition heatmap. Bounce detection active.</span>
+              <span class="text-muted">Press keys to build the condition heatmap. Real switch chatter bounce detection active.</span>
             </div>
+          </div>
+        </div>
+
+        <!-- Station Flow Footer -->
+        <div class="station-flow-footer">
+          <div class="flow-step-tracker">
+            <span class="flow-step-label">Station 4 of 5</span>
+            <span class="flow-step-name">Input &amp; Trackpad</span>
+          </div>
+          <div class="flow-actions">
+            <button type="button" class="btn btn-outline" data-flow-jump="tab-media">← Previous: Audio</button>
+            <button type="button" class="btn btn-primary" data-flow-jump="tab-benchmark">Next: Cooling Pulse →</button>
           </div>
         </div>
       </section>
@@ -1101,6 +1213,18 @@
             <div id="fanProfileStatusMsg" class="text-muted" style="margin-top:0.5rem; font-size:0.8rem;">
               Select a mode to test acoustic bearing response.
             </div>
+          </div>
+        </div>
+
+        <!-- Station Flow Footer -->
+        <div class="station-flow-footer">
+          <div class="flow-step-tracker">
+            <span class="flow-step-label">Station 5 of 5</span>
+            <span class="flow-step-name">Cooling &amp; Performance</span>
+          </div>
+          <div class="flow-actions">
+            <button type="button" class="btn btn-outline" data-flow-jump="tab-input">← Previous: Input</button>
+            <button type="button" class="btn btn-primary" data-flow-jump="tab-inspect">Finish Testing: Return to Verdict →</button>
           </div>
         </div>
       </section>
@@ -1240,19 +1364,19 @@
     <footer class="mode-indicator-strip" role="status" aria-live="polite">
       <div class="strip-item strip-local">
         <span class="strip-dot"></span>
-        <span id="stripModeText">100% AIR-GAPPED OFFLINE</span>
+        <span id="stripModeText">Offline (Zero Network)</span>
       </div>
       <span class="strip-sep">|</span>
       <div class="strip-item">
-        <span id="stripExpertIndicator">NORMAL BUYER LENS</span>
+        <span id="stripExpertIndicator">Buyer Mode</span>
       </div>
       <span class="strip-sep">|</span>
       <div class="strip-item">
-        <span>ZERO HOST TRACE</span>
+        <span>Zero Host Trace</span>
       </div>
       <span class="strip-sep">|</span>
       <div class="strip-item">
-        <span>Xflash v3.0.0</span>
+        <span>Xflash v3.1.0</span>
       </div>
       <div class="strip-shortcuts" style="margin-left:auto; display:flex; gap:12px; font-size:0.68rem; opacity:0.8;">
         <span><kbd>Ctrl</kbd>+<kbd>K</kbd> Command Palette</span>

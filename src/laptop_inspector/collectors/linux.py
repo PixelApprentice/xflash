@@ -531,6 +531,7 @@ class LinuxCollector:
         """Collect thermal zone temperatures across CPU and system sensors."""
         thermal_dir = self.sysfs / "class" / "thermal"
         zones: list[dict[str, Any]] = []
+        cpu_temps: list[float] = []
 
         if thermal_dir.is_dir():
             try:
@@ -545,16 +546,43 @@ class LinuxCollector:
                             "type": zone_type,
                             "temp_c": temp_c,
                         })
+                        z_lower = zone_type.lower()
+                        if any(k in z_lower for k in ("x86_pkg", "pkg", "tcpu", "core", "cpu")) and temp_c > 10:
+                            cpu_temps.append(temp_c)
+            except OSError:
+                pass
+
+        # Inspect hwmon for direct CPU core sensors (coretemp, k10temp, zenpower, cpu_thermal)
+        hwmon_dir = self.sysfs / "class" / "hwmon"
+        if hwmon_dir.is_dir():
+            try:
+                for entry in sorted(hwmon_dir.glob("hwmon*")):
+                    name = (_read_str(entry / "name") or "").lower()
+                    if any(driver in name for driver in ("coretemp", "k10temp", "zenpower", "cpu_thermal")):
+                        for tfile in sorted(entry.glob("temp*_input")):
+                            label = _read_str(tfile.parent / tfile.name.replace("_input", "_label")) or tfile.name
+                            val = _read_int(tfile)
+                            if val is not None and val > 0:
+                                t_val = round(val / 1000.0, 1) if val > 1000 else float(val)
+                                if 15.0 <= t_val <= 125.0:
+                                    cpu_temps.append(t_val)
+                                    zones.append({
+                                        "zone": f"{entry.name}/{tfile.name}",
+                                        "type": f"{name} ({label})",
+                                        "temp_c": t_val,
+                                    })
             except OSError:
                 pass
 
         avg_temp = round(sum(z["temp_c"] for z in zones) / len(zones), 1) if zones else None
         max_temp = max((z["temp_c"] for z in zones), default=None)
+        cpu_temp = max(cpu_temps) if cpu_temps else max_temp
 
         return {
             "zones": zones,
             "average_temp_c": avg_temp,
             "max_temp_c": max_temp,
+            "cpu_temp_c": cpu_temp,
             "source": f"linux-sysfs:{thermal_dir}",
         }
 

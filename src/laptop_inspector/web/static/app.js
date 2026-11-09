@@ -220,6 +220,9 @@ class App {
     this.isExpertMode = isExpert;
     localStorage.setItem("lbk_expert_mode", isExpert ? "true" : "false");
 
+    document.body.classList.toggle("mode-expert", isExpert);
+    document.body.classList.toggle("mode-normal", !isExpert);
+
     const normalLabel = document.querySelector(".normal-label");
     const expertLabel = document.querySelector(".expert-label");
     if (normalLabel && expertLabel) {
@@ -250,7 +253,7 @@ class App {
 
     const stripExpert = document.getElementById("stripExpertIndicator");
     if (stripExpert) {
-      stripExpert.textContent = isExpert ? "⚡ EXPERT BENCH LENS" : "NORMAL BUYER LENS";
+      stripExpert.textContent = isExpert ? "Expert Mode" : "Buyer Mode";
       stripExpert.style.color = isExpert ? "var(--primary)" : "inherit";
     }
   }
@@ -268,6 +271,39 @@ class App {
     document.querySelectorAll("[data-jump-tab]").forEach(btn => {
       btn.addEventListener("click", () => this.switchTab(btn.dataset.jumpTab));
     });
+
+    // Guided station flow navigation buttons (station-to-station next/previous footer)
+    document.querySelectorAll("[data-flow-jump]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        this.switchTab(btn.dataset.flowJump);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+    });
+
+    // Version Update Notice dismissal
+    const vNotice = document.getElementById("versionUpdateNotice");
+    const dismissBtn = document.getElementById("dismissVNoticeBtn");
+    if (vNotice && localStorage.getItem("xflash_v31_dismissed") === "true") {
+      vNotice.style.display = "none";
+    }
+    if (dismissBtn && vNotice) {
+      dismissBtn.addEventListener("click", () => {
+        vNotice.style.opacity = "0";
+        setTimeout(() => { vNotice.style.display = "none"; }, 200);
+        localStorage.setItem("xflash_v31_dismissed", "true");
+      });
+    }
+
+    // Corner / Angle Verification Mode Toggle
+    this.angleVerificationEnabled = true;
+    const angleBtn = document.getElementById("kbAngleModeBtn");
+    if (angleBtn) {
+      angleBtn.addEventListener("click", () => {
+        this.angleVerificationEnabled = !this.angleVerificationEnabled;
+        angleBtn.textContent = `Corner Check: ${this.angleVerificationEnabled ? "ON" : "OFF"}`;
+        angleBtn.className = `btn btn-sm ${this.angleVerificationEnabled ? "btn-secondary" : "btn-outline"}`;
+      });
+    }
 
     // Workflow Stepper Node click navigation
     document.querySelectorAll(".step-node").forEach(node => {
@@ -632,8 +668,110 @@ class App {
     // Render Manual Checklist
     this.renderManualChecklist(session.manual_checks || {});
 
+    // Render Beginner Mode Glanceable Health Assessment
+    this.renderBeginnerSummary(session);
+
     // Render Expert Mode Telemetry Tables
     this.renderExpertTelemetry(session.snapshot || {});
+  }
+
+  renderBeginnerSummary(session) {
+    const snap = session.snapshot || {};
+    const report = session.report || {};
+    const findings = report.findings || [];
+
+    // Battery
+    const bat = snap.battery;
+    const bTitle = document.getElementById("bCardBatteryTitle");
+    const bDesc = document.getElementById("bCardBatteryDetail");
+    const bTag = document.getElementById("bCardBatteryTag");
+    if (bTitle && bDesc) {
+      if (bat && bat.health_pct !== null && bat.health_pct !== undefined) {
+        const cycles = bat.cycle_count ? ` · ${bat.cycle_count} cycles` : "";
+        if (bat.health_pct >= 80) {
+          bTitle.innerHTML = `<span style="color:var(--severity-passed); font-weight:700;">Healthy</span> · ${bat.health_pct}% Capacity`;
+          bDesc.textContent = `Battery retains good charge capacity (${bat.full_charge_capacity_mwh || "--"} mWh${cycles}). Normal daily runtime expected.`;
+          if (bTag) bTag.textContent = "Healthy";
+        } else {
+          bTitle.innerHTML = `<span style="color:var(--severity-warning); font-weight:700;">Degraded</span> · ${bat.health_pct}% Capacity`;
+          bDesc.textContent = `Battery is significantly worn${cycles}. Budget for an eventual battery replacement.`;
+          if (bTag) bTag.textContent = "Degraded";
+        }
+      } else {
+        bTitle.textContent = "Battery Not Detected / AC Mode";
+        bDesc.textContent = "System is running on AC wall power or battery controller registers are not exposed.";
+        if (bTag) bTag.textContent = "AC Mode";
+      }
+    }
+
+    // Storage
+    const storage = snap.storage;
+    const sTitle = document.getElementById("bCardStorageTitle");
+    const sDesc = document.getElementById("bCardStorageDetail");
+    const sTag = document.getElementById("bCardStorageTag");
+    if (sTitle && sDesc) {
+      if (storage) {
+        const errors = storage.media_errors || 0;
+        const used = storage.percentage_used;
+        const cap = storage.capacity_gb ? `${storage.capacity_gb} GB` : "Drive";
+        if (errors > 0) {
+          sTitle.innerHTML = `<span style="color:var(--severity-critical); font-weight:700;">Drive Warning</span> · ${errors} Errors`;
+          sDesc.textContent = `Physical drive logged ${errors} media read/write errors. Immediate backup and replacement required.`;
+          if (sTag) sTag.textContent = "Warning";
+        } else if (used !== null && used !== undefined) {
+          sTitle.innerHTML = `<span style="color:var(--severity-passed); font-weight:700;">Clean SSD</span> · ${cap}`;
+          sDesc.textContent = `Zero drive errors recorded. Flash wear is at ${used}% (ample endurance remaining).`;
+          if (sTag) sTag.textContent = "Healthy";
+        } else {
+          sTitle.textContent = `${cap} · Storage Active`;
+          sDesc.textContent = `${storage.model || "Internal drive"} detected with clean operational status.`;
+          if (sTag) sTag.textContent = "Active";
+        }
+      }
+    }
+
+    // Listing Claims Agreement
+    const cTitle = document.getElementById("bCardClaimsTitle");
+    const cDesc = document.getElementById("bCardClaimsDetail");
+    const cTag = document.getElementById("bCardClaimsTag");
+    if (cTitle && cDesc) {
+      const claimFindings = findings.filter(f => f.category === "memory" || f.category === "storage" || f.category === "system");
+      const highMismatches = claimFindings.filter(f => f.severity === "high" || f.severity === "critical");
+      if (highMismatches.length > 0) {
+        cTitle.innerHTML = `<span style="color:var(--severity-critical); font-weight:700;">Discrepancy</span> · Check Specs`;
+        cDesc.textContent = highMismatches[0].explanation || "Physical hardware did not match seller listing claims.";
+        if (cTag) cTag.textContent = "Mismatch";
+      } else {
+        cTitle.innerHTML = `<span style="color:var(--severity-passed); font-weight:700;">Claims Verified</span> · Hardware Matches`;
+        cDesc.textContent = "Observed physical RAM, processor, and storage capacity agree with seller listing specs.";
+        if (cTag) cTag.textContent = "Agreed";
+      }
+    }
+
+    // Thermals
+    const tTitle = document.getElementById("bCardThermalsTitle");
+    const tDesc = document.getElementById("bCardThermalsDetail");
+    const tTag = document.getElementById("bCardThermalsTag");
+    if (tTitle && tDesc) {
+      const cpu = snap.cpu || {};
+      const thermals = snap.thermals || {};
+      const temp = cpu.temperature_c || thermals.cpu_temp_c || thermals.max_temp_c || thermals.average_temp_c;
+      if (temp !== undefined && temp !== null) {
+        if (temp >= 85) {
+          tTitle.innerHTML = `<span style="color:var(--severity-warning); font-weight:700;">Elevated</span> · ${temp}°C`;
+          tDesc.textContent = "Processor is idling high. Clean heatsink dust or check thermal paste.";
+          if (tTag) tTag.textContent = "Warm";
+        } else {
+          tTitle.innerHTML = `<span style="color:var(--severity-passed); font-weight:700;">Cool & Clean</span> · ${temp}°C`;
+          tDesc.textContent = "Processor operates well within thermal limits. No thermal throttling detected.";
+          if (tTag) tTag.textContent = "Normal";
+        }
+      } else {
+        tTitle.textContent = "Thermals Monitored";
+        tDesc.textContent = "Run the 5-Second Cooling Pulse under the Cooling tab to test fan response.";
+        if (tTag) tTag.textContent = "Active";
+      }
+    }
   }
 
   async saveToUsbReports() {
@@ -1634,29 +1772,126 @@ class App {
   }
 
   handleGlobalKeypress(e) {
+    if (e.repeat) return; // Prevent OS autorepeat from skewing counts or misclassifying switch chatter
+
+    this.currentlyHeldKeys = this.currentlyHeldKeys || new Set();
+    this.cornerVerifiedKeys = this.cornerVerifiedKeys || new Set();
+    this.keyActuationCounts = this.keyActuationCounts || {};
+    this.keyReleaseTimestamp = this.keyReleaseTimestamp || {};
+    this.keyPressTimestamps = this.keyPressTimestamps || [];
+    this.keyBounceFlags = this.keyBounceFlags || {};
+
+    const now = performance.now();
+    this.currentlyHeldKeys.add(e.code);
+    this.updateRolloverDisplay();
+
+    // Electrical contact chatter detection:
+    // If a keyup occurred on the SAME key < 18ms ago, that indicates physical contact bounce
+    const lastRelease = this.keyReleaseTimestamp[e.code] || 0;
+    if (lastRelease > 0 && (now - lastRelease) < 18) {
+      this.keyBounceFlags[e.code] = true;
+    }
+
+    // Measure typing cadence (keystrokes per second)
+    this.keyPressTimestamps.push(now);
+    if (this.keyPressTimestamps.length > 20) this.keyPressTimestamps.shift();
+    this.updateTypingCadence();
+
+    const count = (this.keyActuationCounts[e.code] || 0) + 1;
+    this.keyActuationCounts[e.code] = count;
+
     const keyEl = document.getElementById(`kb-${e.code}`);
     if (keyEl) {
       keyEl.classList.add("pressed", "tested");
       this.verifiedKeys.add(e.code);
       document.getElementById("kbVerifiedCount").innerText = this.verifiedKeys.size;
-      document.getElementById("lastKeyPressed").innerText = `Last key pressed: ${e.key} (Code: ${e.code})`;
+
+      const angleCheck = this.angleVerificationEnabled !== false;
+      if (angleCheck) {
+        if (count === 1) {
+          keyEl.classList.add("corner-pending");
+          keyEl.classList.remove("fully-verified");
+          document.getElementById("lastKeyPressed").innerHTML = `Key <strong>${e.key}</strong> [${e.code}] registered (1/2: center strike). <em>Now strike key corner/angle to verify switch stability.</em>`;
+        } else {
+          keyEl.classList.remove("corner-pending");
+          keyEl.classList.add("fully-verified");
+          this.cornerVerifiedKeys.add(e.code);
+          document.getElementById("lastKeyPressed").innerHTML = `Key <strong>${e.key}</strong> [${e.code}] <strong>fully verified</strong> (center + corner strike confirmed).`;
+        }
+      } else {
+        keyEl.classList.add("fully-verified");
+        this.cornerVerifiedKeys.add(e.code);
+        document.getElementById("lastKeyPressed").innerHTML = `Key <strong>${e.key}</strong> [${e.code}] verified.`;
+      }
+
+      const cornerCountEl = document.getElementById("kbCornerVerifiedCount");
+      if (cornerCountEl) cornerCountEl.innerText = this.cornerVerifiedKeys.size;
     }
+
     // Record for heatmap tracking
     this.recordKeyPressHeatmap(e.code);
   }
 
   handleGlobalKeyRelease(e) {
+    if (this.currentlyHeldKeys) {
+      this.currentlyHeldKeys.delete(e.code);
+      this.updateRolloverDisplay();
+    }
+    this.keyReleaseTimestamp = this.keyReleaseTimestamp || {};
+    this.keyReleaseTimestamp[e.code] = performance.now();
+
     const keyEl = document.getElementById(`kb-${e.code}`);
     if (keyEl) {
       keyEl.classList.remove("pressed");
     }
   }
 
+  updateRolloverDisplay() {
+    const el = document.getElementById("kbRolloverLive");
+    if (!el) return;
+    const held = Array.from(this.currentlyHeldKeys || []);
+    if (held.length === 0) {
+      el.innerHTML = `<span class="rollover-idle">Rollover: 0 keys held (Clean)</span>`;
+    } else if (held.length >= 3) {
+      el.innerHTML = `<span class="rollover-chord">Active Rollover: ${held.length} keys held [${held.map(c => c.replace("Key", "")).join(", ")}] — Clean n-key trace</span>`;
+    } else {
+      el.innerHTML = `<span class="rollover-active">Held: [${held.map(c => c.replace("Key", "")).join(", ")}]</span>`;
+    }
+  }
+
+  updateTypingCadence() {
+    const el = document.getElementById("kbCadenceLive");
+    if (!el) return;
+    if (!this.keyPressTimestamps || this.keyPressTimestamps.length < 2) {
+      el.textContent = "Cadence: 0 keys/sec";
+      return;
+    }
+    const recent = this.keyPressTimestamps.slice(-10);
+    const timeSpan = (recent[recent.length - 1] - recent[0]) / 1000.0;
+    if (timeSpan > 0.05) {
+      const cps = ((recent.length - 1) / timeSpan).toFixed(1);
+      el.textContent = `Cadence: ${cps} keys/sec`;
+    }
+  }
+
   resetKeyboard() {
     this.verifiedKeys.clear();
-    document.querySelectorAll(".key.tested").forEach(k => k.classList.remove("tested", "pressed"));
+    if (this.cornerVerifiedKeys) this.cornerVerifiedKeys.clear();
+    if (this.currentlyHeldKeys) this.currentlyHeldKeys.clear();
+    this.keyActuationCounts = {};
+    this.keyReleaseTimestamp = {};
+    this.keyBounceFlags = {};
+    this.keyPressTimestamps = [];
+
+    document.querySelectorAll(".key.tested, .key.fully-verified, .key.corner-pending, .key.pressed").forEach(k => {
+      k.classList.remove("tested", "fully-verified", "corner-pending", "pressed", "heat-cold", "heat-warm", "heat-hot", "heat-bounce");
+    });
     document.getElementById("kbVerifiedCount").innerText = "0";
+    const cornerCountEl = document.getElementById("kbCornerVerifiedCount");
+    if (cornerCountEl) cornerCountEl.innerText = "0";
     document.getElementById("lastKeyPressed").innerText = "Press any key to begin verification…";
+    this.updateRolloverDisplay();
+    this.updateKeyConditionReport();
   }
 
   // --------------------------------------------------------------------------
@@ -2128,7 +2363,7 @@ class App {
     if (!runBtn) return;
     const origText = runBtn.innerHTML;
     runBtn.disabled = true;
-    runBtn.innerHTML = "⏳ Running 5-second thermal pulse…";
+    runBtn.innerHTML = "⏳ Running 5-second multi-core pulse…";
 
     const peakEl = document.getElementById("benchPeakTempVal");
     const startEl = document.getElementById("benchStartTemp");
@@ -2137,29 +2372,38 @@ class App {
     const statusEl = document.getElementById("benchStatusBadge");
 
     if (peakEl) peakEl.textContent = "…°C";
+    if (statusEl) {
+      statusEl.textContent = "Testing…";
+      statusEl.style.color = "var(--primary)";
+    }
 
     try {
       const resp = await fetch("/api/benchmark/cpu-pulse", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({})
+        body: JSON.stringify({ duration: 5.0 })
       });
       if (!resp.ok) throw new Error(`Server error ${resp.status}`);
       const d = await resp.json();
 
       if (peakEl) peakEl.textContent = `${d.peak_temp_c ?? "--"}°C`;
       if (startEl) startEl.textContent = `${d.initial_temp_c ?? "--"}°C`;
-      if (deltaEl) deltaEl.textContent = `+${d.temp_rise_c ?? "--"}°C`;
-      if (rampEl) rampEl.textContent = `${d.thermal_ramp_rate ?? "--"} °C/s`;
+      if (deltaEl) deltaEl.textContent = `+${d.temp_rise_c ?? 0.0}°C`;
+      if (rampEl) rampEl.textContent = `${d.thermal_ramp_rate ?? 0.0} °C/s`;
 
       if (statusEl) {
-        const isThrottle = d.throttle_detected;
-        statusEl.textContent = isThrottle ? "⚠️ Throttling" : "✅ Healthy";
-        statusEl.style.color = isThrottle ? "var(--severity-critical)" : "var(--severity-passed)";
+        statusEl.textContent = d.status || (d.throttle_detected ? "⚠️ Throttling" : "✅ Healthy");
+        statusEl.style.color = d.throttle_detected ? "var(--severity-critical)" : (d.temp_rise_c >= 25 ? "var(--severity-warning)" : "var(--severity-passed)");
       }
+
+      // Refresh fan readings after pulse
+      setTimeout(() => this.loadFanRpms(), 1000);
     } catch (err) {
       if (peakEl) peakEl.textContent = "Error";
-      if (statusEl) statusEl.textContent = "Failed: " + err.message;
+      if (statusEl) {
+        statusEl.textContent = "Failed: " + err.message;
+        statusEl.style.color = "var(--severity-critical)";
+      }
     } finally {
       runBtn.disabled = false;
       runBtn.innerHTML = origText;
@@ -2180,16 +2424,8 @@ class App {
 
   recordKeyPressHeatmap(code) {
     const now = performance.now();
-    const prev = this.keyLastTimestamp[code] || 0;
-    const delta = now - prev;
-
     this.keyPressCounts[code] = (this.keyPressCounts[code] || 0) + 1;
     this.keyLastTimestamp[code] = now;
-
-    // Bounce detection: two presses < 30ms = contact bounce / mechanical fault
-    if (prev > 0 && delta < 30) {
-      this.keyBounceFlags[code] = true;
-    }
 
     this.updateKeyHeatmapColor(code);
     this.updateKeyConditionReport();

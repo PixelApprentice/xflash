@@ -12,7 +12,8 @@ from typing import Any
 from urllib.parse import parse_qs, urlparse
 
 from ..analysis import analyze_snapshot
-from ..collectors.linux import LinuxCollector
+from ..benchmark import run_cpu_pulse
+from ..collectors import get_collector, LinuxCollector
 from ..db import Database, DEFAULT_DB_PATH, get_default_db_path, get_reports_dir, is_portable_mode
 from ..report import to_html, to_json
 
@@ -69,7 +70,7 @@ class InspectorRequestHandler(SimpleHTTPRequestHandler):
             self._send_json({
                 "status": "healthy",
                 "application": "Xflash Diagnostics",
-                "version": "3.0.0",
+                "version": "3.1.0",
                 "offline_mode": True,
                 "portable_mode": is_portable,
                 "db_path": str(self.db.db_path),
@@ -79,7 +80,7 @@ class InspectorRequestHandler(SimpleHTTPRequestHandler):
 
         if path == "/api/probe":
             try:
-                collector = LinuxCollector()
+                collector = get_collector()
                 specs = collector.probe_host_specs()
                 self._send_json(specs)
             except Exception as exc:
@@ -88,7 +89,7 @@ class InspectorRequestHandler(SimpleHTTPRequestHandler):
 
         if path == "/api/ports":
             try:
-                collector = LinuxCollector()
+                collector = get_collector()
                 ports = collector.collect_ports()
                 self._send_json(ports)
             except Exception as exc:
@@ -97,7 +98,7 @@ class InspectorRequestHandler(SimpleHTTPRequestHandler):
 
         if path == "/api/network":
             try:
-                collector = LinuxCollector()
+                collector = get_collector()
                 net = collector.collect_network()
                 self._send_json(net)
             except Exception as exc:
@@ -106,7 +107,7 @@ class InspectorRequestHandler(SimpleHTTPRequestHandler):
 
         if path == "/api/system/extended":
             try:
-                collector = LinuxCollector()
+                collector = get_collector()
                 sysext = collector.collect_system_extended()
                 self._send_json(sysext)
             except Exception as exc:
@@ -115,7 +116,7 @@ class InspectorRequestHandler(SimpleHTTPRequestHandler):
 
         if path == "/api/fans":
             try:
-                collector = LinuxCollector()
+                collector = get_collector()
                 fans = collector.collect_fans()
                 self._send_json(fans)
             except Exception as exc:
@@ -124,7 +125,7 @@ class InspectorRequestHandler(SimpleHTTPRequestHandler):
 
         if path == "/api/fan/profiles":
             try:
-                collector = LinuxCollector()
+                collector = get_collector()
                 profiles = collector.get_fan_profiles()
                 self._send_json(profiles)
             except Exception as exc:
@@ -199,36 +200,10 @@ class InspectorRequestHandler(SimpleHTTPRequestHandler):
 
         if path == "/api/benchmark/cpu-pulse":
             try:
-                import time, math
-                collector = LinuxCollector()
-                t_start = collector.collect_thermals()
-                initial_max = t_start.get("max_temp_c") if isinstance(t_start, dict) else 45.0
-                if initial_max is None:
-                    initial_max = 45.0
-
-                start_time = time.time()
-                iterations = 0
-                while time.time() - start_time < 5.0:
-                    for _ in range(50000):
-                        math.sqrt(12345.6789)
-                    iterations += 50000
-
-                t_end = collector.collect_thermals()
-                peak_max = t_end.get("max_temp_c") if isinstance(t_end, dict) else (initial_max or 50.0)
-                if peak_max is None:
-                    peak_max = initial_max
-                rise = max(0.0, round(peak_max - initial_max, 1))
-
-                self._send_json({
-                    "duration_seconds": 5.0,
-                    "initial_temp_c": initial_max,
-                    "peak_temp_c": peak_max,
-                    "temp_rise_c": rise,
-                    "thermal_ramp_rate": round(rise / 5.0, 2),
-                    "throttle_detected": peak_max >= 95.0,
-                    "status": "PASS — Normal Cooling Dissipation" if peak_max < 90 else "WARNING — High Thermal Rise",
-                    "iterations_completed": iterations,
-                })
+                collector = get_collector()
+                duration = float(body.get("duration", 5.0)) if isinstance(body, dict) else 5.0
+                result = run_cpu_pulse(duration_seconds=duration, collector=collector)
+                self._send_json(result)
             except Exception as exc:
                 self._send_error_json(f"Thermal pulse failed: {exc}", HTTPStatus.INTERNAL_SERVER_ERROR)
             return
@@ -239,7 +214,7 @@ class InspectorRequestHandler(SimpleHTTPRequestHandler):
                 self._send_error_json("Payload must contain a string 'profile'", HTTPStatus.BAD_REQUEST)
                 return
             try:
-                collector = LinuxCollector()
+                collector = get_collector()
                 res = collector.set_fan_profile(profile)
                 if res.get("success"):
                     self._send_json(res)
@@ -279,7 +254,7 @@ class InspectorRequestHandler(SimpleHTTPRequestHandler):
             operator_notes = body.get("operator_notes")
 
             try:
-                collector = LinuxCollector()
+                collector = get_collector()
                 snapshot = collector.collect_snapshot(claims=claims)
                 report = analyze_snapshot(snapshot)
                 session_id = self.db.save_session(snapshot, report, operator_notes=operator_notes)

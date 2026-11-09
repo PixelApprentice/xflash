@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "xflash"
-version = "3.0.0"
+version = "3.1.0"
 description = "Xflash: Check before you pay. Offline-first, read-only hardware assurance and seller listing verification tool for used laptops."
 readme = "README.md"
 requires-python = ">=3.10"

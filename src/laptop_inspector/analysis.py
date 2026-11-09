@@ -581,7 +581,7 @@ def analyze_snapshot(snapshot: dict[str, Any]) -> dict[str, Any]:
     return {
         "report_schema_version": "1.0",
         "inspection_id": (snapshot.get("inspection") or {}).get("id"),
-        "generated_by": "xflash/3.0.0",
+        "generated_by": "xflash/3.1.0",
         "risk_state": risk_state,
         "checks_evaluated": checks,
         "coverage": coverage,

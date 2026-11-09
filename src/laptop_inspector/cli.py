@@ -66,10 +66,10 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def _collect_live_or_fallback(claims: dict[str, Any]) -> dict[str, Any]:
-    """Collect live system snapshot via LinuxCollector, falling back gracefully if unavailable."""
+    """Collect live system snapshot via platform collector, falling back gracefully if unavailable."""
     try:
-        from .collectors.linux import LinuxCollector
-        collector = LinuxCollector()
+        from .collectors import get_collector
+        collector = get_collector()
         return collector.collect_snapshot(claims=claims)
     except Exception as exc:
         import platform
