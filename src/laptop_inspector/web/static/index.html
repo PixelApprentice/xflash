@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#0D1117">
-  <meta name="color-scheme" content="dark">
-  <title>Xflash (Aegis) v3.0 — Offline Hardware Assurance &amp; Spec Check</title>
+  <meta name="theme-color" content="#faf9f5">
+  <meta name="color-scheme" content="light dark">
+  <title>Xflash (Aegis) v3.0 — The Honest Hardware Standard · Anthropic Editorial Edition</title>
   <link rel="stylesheet" href="app.css">
 </head>
 <body>
@@ -16,11 +16,13 @@
     <div class="splash-content">
       <svg class="splash-ring-svg" viewBox="0 0 72 72" aria-hidden="true">
         <circle class="splash-ring-track" cx="36" cy="36" r="28" />
+        <path d="M 36 16 A 20 20 0 0 0 16 36" stroke="#6a9bcc" stroke-width="2" stroke-linecap="round" stroke-dasharray="3 4" opacity="0.85" />
+        <polygon points="36,25 45,36 36,47 27,36" fill="#788c5d" opacity="0.95" />
         <circle id="splashRingFill" class="splash-ring-fill" cx="36" cy="36" r="28" transform="rotate(-90 36 36)" />
         <circle id="splashSpark" class="splash-spark" cx="64" cy="36" r="3.5" />
       </svg>
       <div class="splash-wordmark">X<span>flash</span></div>
-      <div class="splash-tagline">Offline Hardware Assurance · Workshop-Bench v3.0</div>
+      <div class="splash-tagline">The Honest Hardware Standard · Anthropic Editorial Edition</div>
     </div>
   </div>
 
@@ -46,16 +48,22 @@
     <header class="navbar">
       <div class="nav-container">
         <!-- Brand -->
-        <div class="brand">
+        <div class="brand" title="Xflash Diagnostics — Anthropic Editorial Edition">
           <div class="brand-shield" aria-hidden="true">
-            <svg viewBox="0 0 32 32" fill="none" class="shield-svg" width="30" height="30">
-              <circle cx="16" cy="16" r="11" stroke="#6CA6F2" stroke-width="2.6" stroke-dasharray="52 17" stroke-linecap="round" transform="rotate(-90 16 16)" />
-              <circle cx="25.5" cy="16" r="2.2" fill="#6CA6F2" />
+            <svg viewBox="0 0 32 32" fill="none" class="shield-svg" width="32" height="32" aria-label="Xflash Aperture">
+              <!-- Outer Calibration Track Arc (Terracotta #d97757) -->
+              <circle cx="16" cy="16" r="11" stroke="#d97757" stroke-width="2.6" stroke-dasharray="52 17" stroke-linecap="round" transform="rotate(-90 16 16)" />
+              <!-- Inner Precision Optical Guide (Slate Blue #6a9bcc) -->
+              <path d="M 16 8 A 8 8 0 0 0 8 16" stroke="#6a9bcc" stroke-width="1.8" stroke-linecap="round" stroke-dasharray="2 3" opacity="0.9" />
+              <!-- Diagnostic Aperture Core (Sage #788c5d) -->
+              <polygon points="16,11.5 19.5,16 16,20.5 12.5,16" fill="#788c5d" />
+              <!-- Calibration Focal Spark (Terracotta #d97757) -->
+              <circle cx="25.5" cy="16" r="2.2" fill="#d97757" />
             </svg>
           </div>
           <div class="brand-text">
             <span class="brand-title">Xflash <span style="font-weight:400; opacity:0.8; font-size:0.9em;">· Aegis Diagnostics</span></span>
-            <span class="brand-tag">v3.0 · Check Before You Pay</span>
+            <span class="brand-tag">The Honest Hardware Standard · Offline v3.0</span>
           </div>
         </div>
 
@@ -402,7 +410,7 @@
                     <text class="schematic-sublabel" x="270" y="86" id="schematic-display-sub" text-anchor="middle" font-size="9" fill="currentColor" opacity="0.75">Click for Screen Studio (Pixels, UFO, Contrast)</text>
                     <!-- Webcam -->
                     <rect x="250" y="14" width="40" height="18" rx="4" class="schematic-zone zone-healthy" id="schematic-webcam" data-target-tab="tab-media" style="cursor:pointer;" />
-                    <circle cx="270" cy="23" r="3" fill="#6CA6F2" />
+                    <circle cx="270" cy="23" r="3" fill="#6a9bcc" />
                     <!-- Left & Right Hinges -->
                     <rect x="60" y="148" width="36" height="12" rx="2" class="schematic-zone zone-healthy" id="schematic-hinge-l" data-target-subtab="subtab-manual" style="cursor:pointer;" />
                     <rect x="444" y="148" width="36" height="12" rx="2" class="schematic-zone zone-healthy" id="schematic-hinge-r" data-target-subtab="subtab-manual" style="cursor:pointer;" />
