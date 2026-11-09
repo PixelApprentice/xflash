@@ -1195,7 +1195,7 @@ class App {
           <button type="button" class="check-btn ${current.status === 'failed' ? 'active-fail' : ''}" data-val="failed">FAIL</button>
           <button type="button" class="check-btn" data-val="not_applicable">N/A</button>
         </div>
-        <input type="text" class="check-notes-input" placeholder="Optional operator notes…" value="${current.notes || ''}" />
+        <input type="text" class="check-notes-input" placeholder="Optional operator notes…" value="${current.notes || ''}" aria-label="Notes for ${def.name}" autocomplete="off" />
       `;
 
       const input = item.querySelector(".check-notes-input");
@@ -1765,6 +1765,7 @@ class App {
         keyEl.className = `key ${key.class || ""}`;
         keyEl.id = `kb-${key.code}`;
         keyEl.innerText = key.label;
+        keyEl.setAttribute("aria-label", `Key ${key.label}`);
         rowEl.appendChild(keyEl);
       });
       container.appendChild(rowEl);
@@ -2642,19 +2643,22 @@ class App {
         return;
       }
       items.forEach((item, index) => {
-        const div = document.createElement("div");
-        div.className = `cmd-result-item ${index === 0 ? "active" : ""}`;
-        div.innerHTML = `
-          <span style="font-size:1.1rem;">${item.icon}</span>
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = `cmd-result-item ${index === 0 ? "active" : ""}`;
+        btn.setAttribute("role", "option");
+        btn.setAttribute("aria-selected", index === 0 ? "true" : "false");
+        btn.innerHTML = `
+          <span style="font-size:1.1rem;" aria-hidden="true">${item.icon}</span>
           <span class="cmd-result-label">${item.label}</span>
           <span class="cmd-result-kbd">ENTER</span>
         `;
-        div.addEventListener("click", () => {
+        btn.addEventListener("click", () => {
           closePalette();
           if (item.tab) this.switchTab(item.tab);
           if (item.action) item.action();
         });
-        results.appendChild(div);
+        results.appendChild(btn);
       });
     };
 
@@ -2743,6 +2747,17 @@ class App {
   }
 
   initSchematicClicks() {
+    const toggleBtn = document.getElementById("toggleSchematicBtn");
+    const schematicBody = document.getElementById("schematicBody");
+    if (toggleBtn && schematicBody) {
+      toggleBtn.addEventListener("click", () => {
+        const isHidden = schematicBody.style.display === "none";
+        schematicBody.style.display = isHidden ? "block" : "none";
+        toggleBtn.textContent = isHidden ? "Collapse" : "Expand";
+        toggleBtn.setAttribute("aria-expanded", isHidden ? "true" : "false");
+      });
+    }
+
     document.querySelectorAll(".schematic-zone").forEach(zone => {
       zone.addEventListener("click", () => {
         const tab = zone.dataset.targetTab;

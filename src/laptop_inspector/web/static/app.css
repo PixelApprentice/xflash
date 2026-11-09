@@ -182,9 +182,37 @@ html {
   top: 10px;
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1, h2, h3, h4, h5, h6,
+.brand-title,
+.verdict-header h2,
+.station-header-title h2 {
   font-family: var(--font-sans);
   text-wrap: balance;
+}
+
+/* Tabular figures for telemetry & numbers */
+.port-stat-num,
+.stat-num,
+.bench-stat-num,
+.dial-percent,
+.thermal-dial-val,
+.meter-val,
+.pulse-temp-val,
+.ufo-hz-val,
+.kb-metric-badge,
+.table td,
+.step-badge,
+.badge,
+.val-pill,
+.flow-step-label {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Touch & tap feedback defaults */
+button, a, input, select, textarea,
+.nav-btn, .subnav-btn, .quick-tool-btn, .station-nav-btn, .check-btn, .step-node {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
@@ -410,7 +438,7 @@ p, .finding-details, .verdict-summary, .about-content p, .step-desc, .audit-desc
   cursor: pointer;
   inset: 0;
   background-color: var(--border-hover);
-  transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   border-radius: 18px;
 }
 
@@ -422,7 +450,7 @@ p, .finding-details, .verdict-summary, .about-content p, .step-desc, .audit-desc
   left: 2px;
   bottom: 2px;
   background-color: white;
-  transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   border-radius: 50%;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
@@ -715,8 +743,9 @@ input:checked + .slider:before {
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-.form-group input:focus, .form-group textarea:focus {
-  outline: none;
+.form-group input:focus-visible, .form-group textarea:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 1px;
   border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(217, 119, 87, 0.16);
 }
@@ -1772,6 +1801,7 @@ input:checked + .slider:before {
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  overscroll-behavior: contain;
 }
 
 .screen-test-help {
@@ -2399,6 +2429,7 @@ input:checked + .slider:before {
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.15s ease;
+  overscroll-behavior: contain;
 }
 
 .cmd-palette-overlay.open {
@@ -2422,6 +2453,12 @@ input:checked + .slider:before {
   gap: 10px;
   padding: 0.85rem 1rem;
   border-bottom: 1px solid var(--border-color);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.cmd-input-row:focus-within {
+  border-bottom-color: var(--primary);
+  box-shadow: inset 0 -2px 0 var(--primary);
 }
 
 .cmd-input {
@@ -2460,11 +2497,21 @@ input:checked + .slider:before {
   padding: 0.65rem 1rem;
   cursor: pointer;
   transition: background 0.1s ease, color 0.1s ease;
+  width: 100%;
+  border: none;
+  background: transparent;
+  text-align: left;
+  font-family: inherit;
+  font-size: 0.88rem;
+  color: var(--text-main);
 }
 
-.cmd-result-item:hover, .cmd-result-item.active {
+.cmd-result-item:hover,
+.cmd-result-item.active,
+.cmd-result-item:focus-visible {
   background: var(--primary-subtle);
   color: var(--primary);
+  outline: none;
 }
 
 .cmd-result-kbd {
@@ -2561,7 +2608,7 @@ input:checked + .slider:before {
   fill: var(--bg-surface);
   stroke: var(--border-color);
   stroke-width: 1.5;
-  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform var(--duration-press) var(--ease-out-expo);
+  transition: fill 0.2s ease, stroke 0.2s ease;
 }
 
 .schematic-zone:hover {
