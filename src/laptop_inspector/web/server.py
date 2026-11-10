@@ -15,6 +15,7 @@ from ..analysis import analyze_snapshot
 from ..benchmark import run_cpu_pulse
 from ..collectors import get_collector, LinuxCollector
 from ..db import Database, DEFAULT_DB_PATH, get_default_db_path, get_reports_dir, is_portable_mode
+from ..listing_parser import parse_listing_claims, suggest_bargaining_discount
 from ..report import to_html, to_json
 
 STATIC_DIR = Path(__file__).parent / "static"
@@ -172,6 +173,17 @@ class InspectorRequestHandler(SimpleHTTPRequestHandler):
                 self.wfile.write(content)
                 return
 
+        if path in ("/lite", "/lite.html"):
+            lite_file = STATIC_DIR / "lite.html"
+            if lite_file.is_file():
+                content = lite_file.read_bytes()
+                self.send_response(HTTPStatus.OK)
+                self.send_header("Content-Type", "text/html; charset=utf-8")
+                self.send_header("Content-Length", str(len(content)))
+                self.end_headers()
+                self.wfile.write(content)
+                return
+
         # Serve static assets or fallback to index.html for SPA
         file_path = STATIC_DIR / parsed.path.lstrip("/")
         if file_path.is_file():
@@ -196,6 +208,31 @@ class InspectorRequestHandler(SimpleHTTPRequestHandler):
         body = self._read_body_json()
         if body is None:
             self._send_error_json("Invalid JSON payload", HTTPStatus.BAD_REQUEST)
+            return
+
+        if path == "/api/parse-listing":
+            text = body.get("text", "")
+            claims = parse_listing_claims(str(text))
+            self._send_json({"claims": claims})
+            return
+
+        if path == "/api/bargaining-advice":
+            findings = body.get("findings", [])
+            ram_match = bool(body.get("ram_match", True))
+            storage_match = bool(body.get("storage_match", True))
+            battery_wear = body.get("battery_wear_pct")
+            wear_val = float(battery_wear) if battery_wear is not None else None
+            thermal = bool(body.get("thermal_throttling", False))
+            media_errs = int(body.get("media_errors", 0))
+            advice = suggest_bargaining_discount(
+                findings=findings,
+                ram_match=ram_match,
+                storage_match=storage_match,
+                battery_wear_pct=wear_val,
+                thermal_throttling=thermal,
+                media_errors=media_errs,
+            )
+            self._send_json(advice)
             return
 
         if path == "/api/benchmark/cpu-pulse":

@@ -176,18 +176,18 @@ class App {
       const badge = document.getElementById("appModeBadge");
       if (badge) {
         if (data.portable_mode) {
-          badge.textContent = "⚡ USB PORTABLE";
-          badge.className = "badge status-passed portable-pulse";
-          badge.title = `Zero-Trace Portable USB Mode active. All reports and SQLite database saved to USB drive: ${data.db_path}`;
+          badge.textContent = "USB PORTABLE";
+          badge.className = "strip-badge badge-portable";
+          badge.title = `USB Storage active: ${data.db_path}`;
         } else {
-          badge.textContent = "LOCAL SYSTEM";
-          badge.className = "badge status-passed";
-          badge.title = `System Mode: Database at ${data.db_path}`;
+          badge.textContent = "SYSTEM";
+          badge.className = "strip-badge badge-system";
+          badge.title = `Local database: ${data.db_path}`;
         }
       }
       const stripMode = document.getElementById("stripModeText");
       if (stripMode) {
-        stripMode.textContent = data.portable_mode ? "⚡ USB ZERO-TRACE PORTABLE" : "100% AIR-GAPPED OFFLINE";
+        stripMode.textContent = data.portable_mode ? "Portable USB Storage" : "Offline Local Database";
       }
     } catch (_) {}
   }
@@ -423,7 +423,7 @@ class App {
     const btn = document.getElementById("autoDetectBtn");
     const origHtml = btn.innerHTML;
     btn.disabled = true;
-    btn.innerText = "⚡ Probing Hardware…";
+    btn.innerText = "Probing Hardware…";
 
     try {
       const resp = await fetch("/api/probe");
@@ -483,7 +483,7 @@ class App {
         banner.style.display = "block";
       }
 
-      btn.innerText = "✓ Specs Detected!";
+      btn.innerText = "Specs Detected";
       this.updateWorkflowStepper(2);
       setTimeout(() => {
         btn.innerHTML = origHtml;
@@ -794,7 +794,7 @@ class App {
       if (resp.ok && data.success) {
         this.updateWorkflowStepper(5);
         if (status) {
-          status.innerHTML = `<span style="color:var(--severity-passed); font-weight:600;">✓ Saved to USB: <code>${data.html_file}</code></span>`;
+          status.innerHTML = `<span style="color:var(--severity-passed); font-weight:600;">Saved to USB: <code>${data.html_file}</code></span>`;
         }
       } else {
         if (status) status.textContent = `Notice: ${data.error || "Save failed"}`;
@@ -914,7 +914,9 @@ class App {
     if (!findings || findings.length === 0) {
       container.innerHTML = `
         <div class="empty-state">
-          <div class="empty-icon">✓</div>
+          <div class="empty-icon">
+            <svg class="icon icon-lg" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
           <h3>Clean Findings</h3>
           <p>No anomaly findings were triggered by the automated analysis rules.</p>
         </div>
@@ -1144,6 +1146,41 @@ class App {
       `;
       tbody.appendChild(tr);
     });
+
+    // Render Buyer Bargaining Guidance
+    const adviceCard = document.getElementById("bargainingAdviceCard");
+    const adviceSummary = document.getElementById("bargainingAdviceSummary");
+    const adviceList = document.getElementById("bargainingAdviceList");
+    if (adviceCard && adviceSummary && adviceList) {
+      const batMwh = snapshot.battery?.full_charge_capacity_mwh || 0;
+      const desMwh = snapshot.battery?.design_capacity_mwh || 0;
+      const batWear = (desMwh > 0 && batMwh > 0) ? Math.max(0, 100 - (batMwh / desMwh * 100)) : null;
+      const mediaErr = snapshot.storage?.devices?.[0]?.smart?.media_errors || 0;
+      const isRamMatch = (ramVerdict === "MATCH" || ramVerdict === "VRAM RESERVED" || claimedRam === "Not specified");
+      const isStorMatch = (storVerdict === "MATCH" || claimedStorage === "Not specified");
+
+      fetch("/api/bargaining-advice", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          findings: session.report?.findings || [],
+          ram_match: isRamMatch,
+          storage_match: isStorMatch,
+          battery_wear_pct: batWear,
+          media_errors: mediaErr
+        })
+      }).then(r => r.json()).then(advice => {
+        if (advice && advice.bargaining_points && advice.bargaining_points.length > 0) {
+          adviceCard.style.display = "block";
+          adviceSummary.textContent = advice.summary;
+          adviceList.innerHTML = advice.bargaining_points.map(pt => `<li>${pt}</li>`).join("");
+        } else {
+          adviceCard.style.display = "none";
+        }
+      }).catch(() => {
+        adviceCard.style.display = "none";
+      });
+    }
   }
 
   renderCoverage(coverage) {
@@ -1947,15 +1984,21 @@ class App {
       const portUsbCountEl = document.getElementById("portUsbCount");
       if (portUsbCountEl) portUsbCountEl.textContent = usbDevices.length;
 
+      const iconUsb = `<svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="6" y="2" width="12" height="6" rx="1"/><rect x="4" y="8" width="16" height="14" rx="2"/><path d="M10 2v4M14 2v4"/></svg>`;
+      const iconDisk = `<svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 2h12a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/><circle cx="12" cy="14" r="4"/><path d="M12 6h.01"/></svg>`;
+      const iconDisplay = `<svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>`;
+      const iconPower = `<svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>`;
+      const iconBattery = `<svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="1" y="6" width="18" height="12" rx="2"/><path d="M23 11v2"/></svg>`;
+
       if (usbList) {
         if (usbDevices.length === 0) {
-          usbList.innerHTML = `<div class="port-card empty-port"><div class="port-icon">🔌</div><div><strong>No USB devices detected</strong><p class="text-muted">Plug in a USB drive or mouse to verify each port.</p></div></div>`;
+          usbList.innerHTML = `<div class="port-card empty-port"><div class="port-icon">${iconUsb}</div><div class="port-card-info"><strong>No USB devices detected</strong><p class="text-muted">Plug in a USB drive or mouse to verify each port.</p></div></div>`;
         } else {
           usbList.innerHTML = usbDevices.map(d => `
             <div class="port-card ${d.removable ? 'port-active' : ''}">
               <div class="port-card-top">
-                <div class="port-icon">${d.removable ? '💾' : '🖱️'}</div>
-                <div>
+                <div class="port-icon">${d.removable ? iconDisk : iconUsb}</div>
+                <div class="port-card-info">
                   <strong>${d.product || "USB Device"}</strong>
                   <div class="text-muted" style="font-size:0.8rem;">${d.manufacturer || "Unknown Vendor"} · Port ${d.port_id || ""}</div>
                 </div>
@@ -1975,7 +2018,7 @@ class App {
 
       if (displayList) {
         if (connectors.length === 0) {
-          displayList.innerHTML = `<div class="port-card"><div class="port-icon">🖥️</div><div><strong>No video outputs enumerated</strong></div></div>`;
+          displayList.innerHTML = `<div class="port-card"><div class="port-icon">${iconDisplay}</div><div class="port-card-info"><strong>No video outputs enumerated</strong></div></div>`;
         } else {
           displayList.innerHTML = connectors.map(c => {
             const portName = c.connector || c.name || "Video Output";
@@ -1984,8 +2027,8 @@ class App {
             return `
               <div class="port-card ${isConnected ? 'port-active' : ''}">
                 <div class="port-card-top">
-                  <div class="port-icon">${isEdp ? '💻' : '🖥️'}</div>
-                  <div>
+                  <div class="port-icon">${iconDisplay}</div>
+                  <div class="port-card-info">
                     <strong>${portName}</strong>
                     <div class="text-muted" style="font-size:0.8rem;">${c.port_type || (isEdp ? "Internal Display" : "External Port")} · ${c.status || "Unknown"}</div>
                   </div>
@@ -2008,8 +2051,8 @@ class App {
           acBox.innerHTML = `
             <div class="port-card ${online ? 'port-active' : ''}">
               <div class="port-card-top">
-                <div class="port-icon">${online ? '⚡' : '🔋'}</div>
-                <div>
+                <div class="port-icon">${online ? iconPower : iconBattery}</div>
+                <div class="port-card-info">
                   <strong>${ac.name || "AC Adapter"}</strong>
                   <div class="text-muted" style="font-size:0.8rem;">${online ? "Charger connected and delivering power" : "Running on battery power"}</div>
                 </div>
@@ -2022,8 +2065,8 @@ class App {
           acBox.innerHTML = `
             <div class="port-card">
               <div class="port-card-top">
-                <div class="port-icon">🔌</div>
-                <div>
+                <div class="port-icon">${iconPower}</div>
+                <div class="port-card-info">
                   <strong>AC Sensor Inconclusive</strong>
                   <div class="text-muted" style="font-size:0.8rem;">No AC charging controller exposed via sysfs (Desktop or battery-direct EC)</div>
                 </div>
@@ -2052,8 +2095,11 @@ class App {
       if (!netBox) return;
 
       const adapters = net.adapters || [];
+      const wifiSvg = `<svg class="icon icon-sm" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>`;
+      const ethSvg = `<svg class="icon icon-sm" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>`;
+
       if (adapters.length === 0) {
-        netBox.innerHTML = `<div class="port-card"><div class="port-icon">📡</div><div><strong>No network adapters detected</strong></div></div>`;
+        netBox.innerHTML = `<div class="port-card"><div class="port-icon">${ethSvg}</div><div class="port-card-info"><strong>No network adapters detected</strong></div></div>`;
       } else {
         netBox.innerHTML = adapters.map(a => {
           const ifaceName = a.interface || a.name || "Network Interface";
@@ -2063,8 +2109,8 @@ class App {
           return `
             <div class="port-card ${isUp ? 'port-active' : ''}">
               <div class="port-card-top">
-                <div class="port-icon">${isWifi ? '📶' : '🌐'}</div>
-                <div>
+                <div class="port-icon">${isWifi ? wifiSvg : ethSvg}</div>
+                <div class="port-card-info">
                   <strong>${ifaceName}</strong>
                   <div class="text-muted" style="font-size:0.8rem;">${a.type || "Network"} · Interface State: ${ifaceState}</div>
                 </div>
@@ -2319,7 +2365,7 @@ class App {
           badge.className = `badge status-${profile === 'performance' ? 'critical' : 'passed'}`;
         }
         if (msg) {
-          msg.innerHTML = `✅ Successfully switched to <strong>${profile.toUpperCase()}</strong> mode via ${data.method}. Notice fan acoustic and RPM response!`;
+          msg.innerHTML = `Successfully switched to <strong>${profile.toUpperCase()}</strong> mode via ${data.method}. Notice fan acoustic and RPM response.`;
         }
         setTimeout(() => this.loadFanRpms(), 1200);
       } else {
@@ -2342,11 +2388,13 @@ class App {
         list.innerHTML = `<div class="text-muted" style="font-size:0.85rem;">No fan sensors detected via hwmon sysfs (may require hwmon driver or root for some chips).</div>`;
         return;
       }
+      const fanSvg = `<svg class="icon icon-sm" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 12c.5-2.5 2.5-4 5-4a4 4 0 0 1 0 8c-2.5 0-4.5-1.5-5-4z"/><path d="M12 12c-2.5-.5-4-2.5-4-5a4 4 0 0 1 8 0c0 2.5-1.5 4.5-4 5z"/><path d="M12 12c-.5 2.5-2.5 4-5 4a4 4 0 0 1 0-8c2.5 0 4.5 1.5 5 4z"/></svg>`;
+      const fanIdleSvg = `<svg class="icon icon-sm" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg>`;
       list.innerHTML = fans.map(f => `
         <div class="port-card ${f.rpm > 0 ? 'port-active' : ''}">
           <div class="port-card-top">
-            <div class="port-icon">${f.rpm > 0 ? '🌀' : '💤'}</div>
-            <div>
+            <div class="port-icon">${f.rpm > 0 ? fanSvg : fanIdleSvg}</div>
+            <div class="port-card-info">
               <strong>${f.label}</strong>
               <div class="text-muted" style="font-size:0.8rem;">${f.hwmon}</div>
             </div>
@@ -2393,7 +2441,7 @@ class App {
       if (rampEl) rampEl.textContent = `${d.thermal_ramp_rate ?? 0.0} °C/s`;
 
       if (statusEl) {
-        statusEl.textContent = d.status || (d.throttle_detected ? "⚠️ Throttling" : "✅ Healthy");
+        statusEl.textContent = d.status || (d.throttle_detected ? "Throttling" : "Healthy");
         statusEl.style.color = d.throttle_detected ? "var(--severity-critical)" : (d.temp_rise_c >= 25 ? "var(--severity-warning)" : "var(--severity-passed)");
       }
 
@@ -2457,7 +2505,7 @@ class App {
     for (const [code, bounced] of Object.entries(this.keyBounceFlags)) {
       if (bounced) {
         const count = this.keyPressCounts[code] || 0;
-        issues.push(`<span style="color:var(--severity-critical);">⚠ Key '${code}': ${count} presses, bounce detected — possibly worn switch</span>`);
+        issues.push(`<span style="color:var(--severity-critical); font-weight:600;">Key '${code}': ${count} presses, bounce detected — possibly worn switch</span>`);
       }
     }
     if (issues.length === 0) {
@@ -2522,16 +2570,16 @@ class App {
         let label = s.risk_state;
         if (s.risk_state === "no_detected_anomaly_in_evaluated_checks" || s.risk_state === "pass" || s.risk_state === "healthy") {
           badgeClass = "passed";
-          label = "✓ Healthy / Passed";
+          label = "Healthy / Passed";
         } else if (s.risk_state === "review") {
           badgeClass = "warning";
-          label = "⚠ Review Needed";
+          label = "Review Needed";
         } else if (s.risk_state === "high_risk" || s.risk_state === "critical") {
           badgeClass = "critical";
-          label = "✖ Critical Anomaly";
+          label = "Critical Anomaly";
         } else if (s.risk_state === "inconclusive") {
           badgeClass = "inconclusive";
-          label = "? Inconclusive";
+          label = "Inconclusive";
         }
 
         tr.innerHTML = `
@@ -2573,28 +2621,9 @@ class App {
   // --------------------------------------------------------------------------
   initBootSplash() {
     const splash = document.getElementById("xflashSplash");
-    const ringFill = document.getElementById("splashRingFill");
-    const spark = document.getElementById("splashSpark");
-    if (!splash) return;
-
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    if (splash) {
       splash.classList.add("hidden");
-      return;
-    }
-
-    if (window.gsap && ringFill && spark) {
-      const tl = gsap.timeline({
-        onComplete: () => {
-          gsap.to(splash, { opacity: 0, duration: 0.35, onComplete: () => splash.classList.add("hidden") });
-        }
-      });
-      tl.to(ringFill, { strokeDasharray: "135, 176", duration: 0.8, ease: "power2.out" })
-        .to(spark, { opacity: 1, duration: 0.2 }, "-=0.2")
-        .to({}, { duration: 0.25 });
-    } else {
-      setTimeout(() => {
-        splash.classList.add("hidden");
-      }, 800);
+      splash.style.display = "none";
     }
   }
 
@@ -2606,23 +2635,23 @@ class App {
     if (!overlay || !input || !results) return;
 
     const commands = [
-      { id: "tab-inspect", label: "Diagnostics & Hardware Verdict", icon: "⚡", tab: "tab-inspect" },
-      { id: "tab-screen", label: "Screen Studio (Dead Pixels, Contrast, UFO 144Hz)", icon: "🖥️", tab: "tab-screen" },
-      { id: "tab-ports", label: "Ports & Connectors (USB-C, HDMI, Charger)", icon: "🔌", tab: "tab-ports" },
-      { id: "tab-input", label: "Input Studio (84-Key Heatmap & Trackpad)", icon: "⌨️", tab: "tab-input" },
-      { id: "tab-media", label: "Audio & Camera (20Hz-8kHz Sweep, Mic, Cam)", icon: "🔊", tab: "tab-media" },
-      { id: "tab-benchmark", label: "Cooling Pulse (Thermal Burst, Fan RPM)", icon: "❄️", tab: "tab-benchmark" },
-      { id: "tab-history", label: "Inspection History Archive", icon: "📁", tab: "tab-history" },
-      { id: "tab-about", label: "About Xflash & Offline Guarantees", icon: "ℹ️", tab: "tab-about" },
-      { id: "action-run", label: "Run Full Hardware Diagnostic", icon: "🚀", action: () => document.getElementById("runLiveBtn")?.click() },
-      { id: "action-probe", label: "Auto-Detect Local Hardware Specs", icon: "🔍", action: () => document.getElementById("autoDetectBtn")?.click() },
-      { id: "action-sample", label: "Load Reference Sample Session", icon: "📄", action: () => document.getElementById("loadSampleBtn")?.click() },
-      { id: "action-expert", label: "Toggle Expert Telemetry Mode", icon: "🛠️", action: () => {
+      { id: "tab-inspect", label: "Diagnostics & Hardware Verdict", category: "View", tab: "tab-inspect" },
+      { id: "tab-screen", label: "Screen Studio (Dead Pixels, Contrast, UFO 144Hz)", category: "Studio", tab: "tab-screen" },
+      { id: "tab-ports", label: "Ports & Connectors (USB, HDMI, Charger)", category: "Studio", tab: "tab-ports" },
+      { id: "tab-input", label: "Input Studio (84-Key Heatmap & Trackpad)", category: "Studio", tab: "tab-input" },
+      { id: "tab-media", label: "Audio & Camera (Frequency Sweep, Mic, Cam)", category: "Studio", tab: "tab-media" },
+      { id: "tab-benchmark", label: "Cooling Pulse (Thermal Burst, Fan RPM)", category: "Studio", tab: "tab-benchmark" },
+      { id: "tab-history", label: "Inspection History Archive", category: "Archive", tab: "tab-history" },
+      { id: "tab-about", label: "About Xflash & Offline Verification", category: "Info", tab: "tab-about" },
+      { id: "action-run", label: "Run Full Hardware Diagnostic", category: "Action", action: () => document.getElementById("runLiveBtn")?.click() },
+      { id: "action-probe", label: "Auto-Detect Local Hardware Specs", category: "Action", action: () => document.getElementById("autoDetectBtn")?.click() },
+      { id: "action-sample", label: "Load Reference Sample Session", category: "Action", action: () => document.getElementById("loadSampleBtn")?.click() },
+      { id: "action-expert", label: "Toggle Expert Telemetry Mode", category: "Setting", action: () => {
         const toggle = document.getElementById("expertModeToggle");
         if (toggle) { toggle.checked = !toggle.checked; this.applyMode(toggle.checked); }
       }},
-      { id: "action-print", label: "Print Inspection Certificate (PDF)", icon: "🖨️", action: () => window.print() },
-      { id: "action-usb", label: "Save Report to USB Drive", icon: "💾", action: () => this.saveToUsbReports() }
+      { id: "action-print", label: "Print Inspection Certificate (PDF)", category: "Report", action: () => window.print() },
+      { id: "action-usb", label: "Save Report to USB Drive", category: "Report", action: () => this.saveToUsbReports() }
     ];
 
     const openPalette = () => {
@@ -2649,7 +2678,7 @@ class App {
         btn.setAttribute("role", "option");
         btn.setAttribute("aria-selected", index === 0 ? "true" : "false");
         btn.innerHTML = `
-          <span style="font-size:1.1rem;" aria-hidden="true">${item.icon}</span>
+          <span class="cmd-category-tag">${item.category}</span>
           <span class="cmd-result-label">${item.label}</span>
           <span class="cmd-result-kbd">ENTER</span>
         `;
@@ -2723,12 +2752,12 @@ class App {
       saveUrlBtn.addEventListener("click", () => {
         const url = urlInput.value.trim();
         if (url) {
-          saveUrlBtn.textContent = "✓ Saved";
+          saveUrlBtn.textContent = "Saved";
           const notes = document.getElementById("operatorNotes");
           if (notes && !notes.value.includes(url)) {
             notes.value = notes.value ? `${notes.value}\nListing: ${url}` : `Listing: ${url}`;
           }
-          setTimeout(() => { saveUrlBtn.textContent = "Save URL"; }, 1500);
+          setTimeout(() => { saveUrlBtn.textContent = "Save"; }, 1500);
         }
       });
     }
@@ -2741,6 +2770,45 @@ class App {
         const badge = document.getElementById("listingStateBadge");
         if (badge) {
           badge.textContent = isCollapsed ? "OPT-IN" : "COLLAPSED";
+        }
+      });
+    }
+
+    // Smart Listing Ad Parser
+    const extractBtn = document.getElementById("extractSpecsBtnMain");
+    const pasteInput = document.getElementById("listingPasteInputMain");
+    const doExtract = async () => {
+      const text = pasteInput ? pasteInput.value.trim() : "";
+      if (!text) return;
+      try {
+        const res = await fetch("/api/parse-listing", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const claims = data.claims || {};
+          if (claims.model) document.getElementById("claimModel").value = claims.model;
+          if (claims.ram_gib) document.getElementById("claimRam").value = claims.ram_gib;
+          if (claims.storage_gb) document.getElementById("claimStorage").value = claims.storage_gb;
+          if (claims.cpu_model) document.getElementById("claimCpu").value = claims.cpu_model;
+          if (claims.gpu_model) document.getElementById("claimGpu").value = claims.gpu_model;
+          if (claims.display_resolution) document.getElementById("claimDisplay").value = claims.display_resolution;
+          extractBtn.textContent = "Extracted!";
+          setTimeout(() => { extractBtn.textContent = "Auto-Fill"; }, 1500);
+        }
+      } catch (err) {
+        console.warn("Listing auto-extract error", err);
+      }
+    };
+
+    if (extractBtn && pasteInput) {
+      extractBtn.addEventListener("click", doExtract);
+      pasteInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          doExtract();
         }
       });
     }

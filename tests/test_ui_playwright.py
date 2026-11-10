@@ -306,3 +306,45 @@ class UITestsPlaywright(unittest.TestCase):
             if "SAMPLE-USED-T14-DEMO" in f.name:
                 f.unlink(missing_ok=True)
 
+    def test_lite_edition_loads_and_runs(self):
+        self.page.goto(f"http://{TEST_HOST}:{TEST_PORT}/lite")
+        self.assertIn("Xflash Lite", self.page.title())
+
+        # Check action buttons
+        self.assertTrue(self.page.locator("#liteScanBtn").is_visible())
+        self.assertTrue(self.page.locator("#quickSampleBtn").is_visible())
+        self.assertTrue(self.page.locator("#quickScreenBtn").is_visible())
+
+        # Click Load Demo Sample
+        self.page.click("#quickSampleBtn")
+        self.page.wait_for_selector("#liteVerdictCard", state="visible")
+        self.assertTrue(self.page.locator("#liteVerdictCard").is_visible())
+        self.assertTrue(self.page.locator("#liteMetricsGrid").is_visible())
+        self.assertTrue(self.page.locator("#liteComparisonCard").is_visible())
+
+        # Verify metrics rendered
+        bat_val = self.page.locator("#liteBatVal").text_content()
+        self.assertIn("%", bat_val)
+
+    def test_smart_listing_parser_and_bargaining_in_main_app(self):
+        self.page.goto(f"http://{TEST_HOST}:{TEST_PORT}")
+
+        # Test smart listing ad parser
+        self.page.fill("#listingPasteInputMain", "ThinkPad T14 Gen 2 i7-1165G7 16GB RAM 512GB SSD")
+        self.page.click("#extractSpecsBtnMain")
+        self.page.wait_for_function("document.getElementById('claimRam').value === '16'", timeout=5000)
+
+        self.assertEqual(self.page.locator("#claimRam").input_value(), "16")
+        self.assertEqual(self.page.locator("#claimStorage").input_value(), "512")
+        self.assertIn("ThinkPad T14", self.page.locator("#claimModel").input_value())
+
+        # Load reference sample to check comparison and bargaining
+        self.page.click("#loadSampleBtn")
+        self.page.wait_for_selector("#sessionResults", state="visible")
+
+        # Check comparison tab
+        self.page.click("button[data-subtab='subtab-comparison']")
+        self.page.wait_for_selector("#subtab-comparison", state="visible")
+        self.assertGreater(self.page.locator("#comparisonTableBody tr").count(), 0)
+
+

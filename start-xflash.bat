@@ -19,6 +19,19 @@ set "AEGIS_PORTABLE=1"
 
 set "PY_CMD="
 
+:: 0. Check for single-file standalone binary on USB stick
+if exist "%~dp0xflash.exe" (
+    echo [Xflash] Found standalone zero-install binary: %~dp0xflash.exe
+    start "" "%~dp0xflash.exe" serve --portable
+    timeout /t 2 /nobreak >nul
+    if "%~1"=="--lite" (
+        start "" http://127.0.0.1:8080/lite
+    ) else (
+        start "" http://127.0.0.1:8080
+    )
+    exit /b 0
+)
+
 :: 1. Check for bundled portable Python on USB stick
 if exist "%~dp0python\python.exe" (
     set "PY_CMD=%~dp0python\python.exe"
@@ -88,5 +101,9 @@ echo [Xflash] Found Python interpreter: !PY_CMD!
 echo [Xflash] Starting zero-trace portable diagnostics on http://127.0.0.1:8080 ...
 start "" !PY_CMD! -m laptop_inspector.cli serve --portable
 timeout /t 2 /nobreak >nul
-start "" http://127.0.0.1:8080
+if "%~1"=="--lite" (
+    start "" http://127.0.0.1:8080/lite
+) else (
+    start "" http://127.0.0.1:8080
+)
 exit /b 0
