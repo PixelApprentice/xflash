@@ -347,4 +347,32 @@ class UITestsPlaywright(unittest.TestCase):
         self.page.wait_for_selector("#subtab-comparison", state="visible")
         self.assertGreater(self.page.locator("#comparisonTableBody tr").count(), 0)
 
+    def test_lite_edition_auto_detect(self):
+        self.page.goto(f"http://{TEST_HOST}:{TEST_PORT}/lite")
+        self.assertTrue(self.page.locator("#liteAutoDetectBtn").is_visible())
+        self.page.click("#liteAutoDetectBtn")
+        self.page.wait_for_function("document.getElementById('listingPasteInput').value.length > 0", timeout=8000)
+        detected_text = self.page.locator("#listingPasteInput").input_value()
+        self.assertTrue(len(detected_text) > 0)
+
+    def test_three_theme_selector(self):
+        self.page.goto(f"http://{TEST_HOST}:{TEST_PORT}")
+
+        # Check theme selector pills exist
+        warm_pill = self.page.locator(".theme-pill[data-theme-val='warm']")
+        self.assertTrue(warm_pill.is_visible())
+
+        # Switch to warm theme
+        warm_pill.click()
+        self.assertEqual(self.page.locator("html").get_attribute("data-theme"), "warm")
+
+        # Switch to dark/carbon theme
+        self.page.click(".theme-pill[data-theme-val='dark']")
+        self.assertEqual(self.page.locator("html").get_attribute("data-theme"), "dark")
+
+        # Switch back to porcelain/light theme
+        self.page.click(".theme-pill[data-theme-val='light']")
+        self.assertEqual(self.page.locator("html").get_attribute("data-theme"), "light")
+
+
 

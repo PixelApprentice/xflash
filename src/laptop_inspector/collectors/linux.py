@@ -1007,28 +1007,34 @@ class LinuxCollector:
             f_fan = ex.submit(self.collect_fans)
             f_pro = ex.submit(self.get_fan_profiles)
 
-        mem = f_mem.result()
+        def _safe_res(fut, default=None):
+            try:
+                return fut.result()
+            except Exception:
+                return default
+
+        mem = _safe_res(f_mem, {}) or {}
         total_bytes = mem.get("total_bytes") or 0
         total_gib = round(total_bytes / (1024 ** 3), 1) if total_bytes else 0
 
         return {
-            "system": f_sys.result(),
-            "cpu": f_cpu.result(),
-            "gpu": f_gpu.result(),
+            "system": _safe_res(f_sys, {}),
+            "cpu": _safe_res(f_cpu, {}),
+            "gpu": _safe_res(f_gpu, {}),
             "memory": {
                 **mem,
                 "total_gib": total_gib,
             },
-            "storage": f_sto.result(),
-            "battery": f_bat.result(),
-            "display": f_dis.result(),
-            "ac_adapter": f_ac.result(),
-            "thermals": f_thm.result(),
-            "ports": f_prt.result(),
-            "network": f_net.result(),
-            "system_extended": f_ext.result(),
-            "fans": f_fan.result(),
-            "fan_profiles": f_pro.result(),
+            "storage": _safe_res(f_sto, {"devices": []}),
+            "battery": _safe_res(f_bat, None),
+            "display": _safe_res(f_dis, None),
+            "ac_adapter": _safe_res(f_ac, None),
+            "thermals": _safe_res(f_thm, {"zones": []}),
+            "ports": _safe_res(f_prt, {"usb": [], "display_ports": []}),
+            "network": _safe_res(f_net, {"adapters": []}),
+            "system_extended": _safe_res(f_ext, {}),
+            "fans": _safe_res(f_fan, {"fans": []}),
+            "fan_profiles": _safe_res(f_pro, {"supported": False}),
         }
 
     def collect_snapshot(self, claims: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -1051,6 +1057,12 @@ class LinuxCollector:
             f_fan = ex.submit(self.collect_fans)
             f_pro = ex.submit(self.get_fan_profiles)
 
+        def _safe_res(fut, default=None):
+            try:
+                return fut.result()
+            except Exception:
+                return default
+
         now = datetime.now(timezone.utc).isoformat()
         return {
             "schema_version": "1.0",
@@ -1058,19 +1070,19 @@ class LinuxCollector:
                 "id": f"LINUX-COLLECT-{int(datetime.now(timezone.utc).timestamp())}",
                 "collected_at": now,
             },
-            "system": f_sys.result(),
-            "cpu": f_cpu.result(),
-            "gpu": f_gpu.result(),
-            "display": f_dis.result(),
-            "ac_adapter": f_ac.result(),
-            "thermals": f_thm.result(),
+            "system": _safe_res(f_sys, {"vendor": "Unknown", "model": "Unknown Linux Host"}),
+            "cpu": _safe_res(f_cpu, {"model": "Unknown CPU", "cores": 1, "threads": 1}),
+            "gpu": _safe_res(f_gpu, {"model": "Unknown GPU"}),
+            "display": _safe_res(f_dis, None),
+            "ac_adapter": _safe_res(f_ac, None),
+            "thermals": _safe_res(f_thm, {"zones": []}),
             "claims": claims or {},
-            "battery": f_bat.result(),
-            "storage": f_sto.result(),
-            "memory": f_mem.result(),
-            "ports": f_prt.result(),
-            "network": f_net.result(),
-            "system_extended": f_ext.result(),
-            "fans": f_fan.result(),
-            "fan_profiles": f_pro.result(),
+            "battery": _safe_res(f_bat, None),
+            "storage": _safe_res(f_sto, {"devices": []}),
+            "memory": _safe_res(f_mem, {"total_bytes": None, "available_bytes": None}),
+            "ports": _safe_res(f_prt, {"usb": [], "display_ports": []}),
+            "network": _safe_res(f_net, {"adapters": []}),
+            "system_extended": _safe_res(f_ext, {}),
+            "fans": _safe_res(f_fan, {"fans": []}),
+            "fan_profiles": _safe_res(f_pro, {"supported": False}),
         }

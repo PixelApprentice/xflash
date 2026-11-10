@@ -15,12 +15,16 @@ export PYTHONPATH="$SCRIPT_DIR/src:$SCRIPT_DIR:$PYTHONPATH"
 export XFLASH_PORTABLE=1
 export AEGIS_PORTABLE=1
 
-# Detect Python 3 runtime (check bundled runtime on USB first)
+# Detect Python 3 runtime (check bundled USB runtime first, then virtualenv, then system)
 PYTHON_BIN=""
 if [ -x "$SCRIPT_DIR/python/bin/python3" ]; then
     PYTHON_BIN="$SCRIPT_DIR/python/bin/python3"
 elif [ -x "$SCRIPT_DIR/runtime/bin/python3" ]; then
     PYTHON_BIN="$SCRIPT_DIR/runtime/bin/python3"
+elif [ -x "$SCRIPT_DIR/.venv/bin/python" ]; then
+    PYTHON_BIN="$SCRIPT_DIR/.venv/bin/python"
+elif [ -x "$SCRIPT_DIR/venv/bin/python" ]; then
+    PYTHON_BIN="$SCRIPT_DIR/venv/bin/python"
 elif command -v python3 >/dev/null 2>&1; then
     PYTHON_BIN="python3"
 elif command -v python >/dev/null 2>&1; then

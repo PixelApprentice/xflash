@@ -144,6 +144,98 @@
   --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.5);
 }
 
+[data-theme="warm"] {
+  --bg-primary: #fbf9f5;          /* Warm Ivory Canvas */
+  --bg-surface: #ffffff;          /* Pure Warm Card */
+  --bg-subtle: #f5f2ea;
+  --bg-subtle-hover: #ede9df;
+  --card-bg: #ffffff;
+  --border-color: #e8e3d7;
+  --border-hover: #d6cfc0;
+
+  --text-main: #201c18;          /* Warm Deep Ink */
+  --text-muted: #575148;          /* Rich Warm Gray */
+  --text-subtle: #797166;
+  --text-inverted: #faf8f5;
+
+  --primary: #c2410c;             /* Terracotta Accent */
+  --primary-hover: #9a3412;
+  --primary-subtle: rgba(194, 65, 12, 0.08);
+  --primary-border: rgba(194, 65, 12, 0.25);
+
+  --secondary: #b45309;           /* Amber */
+  --secondary-hover: #92400e;
+  --secondary-subtle: rgba(180, 83, 9, 0.08);
+  --secondary-border: rgba(180, 83, 9, 0.25);
+
+  --tertiary: #15803d;
+  --tertiary-hover: #166534;
+  --tertiary-subtle: rgba(21, 128, 61, 0.08);
+  --tertiary-border: rgba(21, 128, 61, 0.25);
+
+  --accent: #c2410c;
+  --accent-hover: #9a3412;
+
+  --severity-critical: #dc2626;
+  --severity-critical-bg: rgba(220, 38, 38, 0.08);
+  --severity-critical-border: rgba(220, 38, 38, 0.25);
+
+  --severity-high: #ea580c;
+  --severity-high-bg: rgba(234, 88, 12, 0.08);
+  --severity-high-border: rgba(234, 88, 12, 0.25);
+
+  --severity-warning: #d97706;
+  --severity-warning-bg: rgba(217, 119, 6, 0.08);
+  --severity-warning-border: rgba(217, 119, 6, 0.25);
+
+  --severity-passed: #15803d;
+  --severity-passed-bg: rgba(21, 128, 61, 0.08);
+  --severity-passed-border: rgba(21, 128, 61, 0.25);
+
+  --severity-inconclusive: #78716c;
+  --severity-inconclusive-bg: rgba(120, 113, 108, 0.08);
+  --severity-inconclusive-border: rgba(120, 113, 108, 0.22);
+
+  --shadow-sm: 0 1px 2px rgba(60, 40, 20, 0.03);
+  --shadow-md: 0 2px 6px rgba(60, 40, 20, 0.05);
+  --shadow-lg: 0 4px 16px rgba(60, 40, 20, 0.07);
+}
+
+/* 3-Way Impeccable Theme Selector */
+.theme-selector-group {
+  display: inline-flex;
+  align-items: center;
+  background-color: var(--bg-subtle);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-pill);
+  padding: 2px;
+  gap: 2px;
+}
+
+.theme-pill {
+  padding: 0.2rem 0.55rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  border-radius: var(--radius-pill);
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  line-height: 1.2;
+}
+
+.theme-pill:hover {
+  color: var(--text-main);
+}
+
+.theme-pill.active {
+  background-color: var(--bg-surface);
+  color: var(--text-main);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  font-weight: 700;
+}
+
 /* ==========================================================================
    Base & Resets
    ========================================================================== */

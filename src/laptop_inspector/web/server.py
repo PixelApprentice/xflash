@@ -5,6 +5,7 @@ import json
 import mimetypes
 import os
 import sys
+from datetime import datetime, timezone
 from http import HTTPStatus
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -294,8 +295,21 @@ class InspectorRequestHandler(SimpleHTTPRequestHandler):
                 collector = get_collector()
                 snapshot = collector.collect_snapshot(claims=claims)
                 report = analyze_snapshot(snapshot)
-                session_id = self.db.save_session(snapshot, report, operator_notes=operator_notes)
-                full_record = self.db.get_session(session_id)
+                full_record = None
+                try:
+                    session_id = self.db.save_session(snapshot, report, operator_notes=operator_notes)
+                    full_record = self.db.get_session(session_id)
+                except Exception:
+                    pass
+
+                if not full_record:
+                    full_record = {
+                        "id": (snapshot.get("inspection") or {}).get("id") or f"LIVE-{int(datetime.now(timezone.utc).timestamp())}",
+                        "created_at": datetime.now(timezone.utc).isoformat(),
+                        "snapshot": snapshot,
+                        "report": report,
+                        "operator_notes": operator_notes,
+                    }
                 self._send_json(full_record, status=HTTPStatus.CREATED)
             except Exception as exc:
                 self._send_error_json(f"Live collection failed: {exc}", HTTPStatus.INTERNAL_SERVER_ERROR)
@@ -310,8 +324,21 @@ class InspectorRequestHandler(SimpleHTTPRequestHandler):
 
             try:
                 report = analyze_snapshot(snapshot)
-                session_id = self.db.save_session(snapshot, report, operator_notes=operator_notes)
-                full_record = self.db.get_session(session_id)
+                full_record = None
+                try:
+                    session_id = self.db.save_session(snapshot, report, operator_notes=operator_notes)
+                    full_record = self.db.get_session(session_id)
+                except Exception:
+                    pass
+
+                if not full_record:
+                    full_record = {
+                        "id": (snapshot.get("inspection") or {}).get("id") or f"SNAP-{int(datetime.now(timezone.utc).timestamp())}",
+                        "created_at": datetime.now(timezone.utc).isoformat(),
+                        "snapshot": snapshot,
+                        "report": report,
+                        "operator_notes": operator_notes,
+                    }
                 self._send_json(full_record, status=HTTPStatus.CREATED)
             except Exception as exc:
                 self._send_error_json(f"Analysis failed: {exc}", HTTPStatus.BAD_REQUEST)
