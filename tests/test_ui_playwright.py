@@ -1,4 +1,4 @@
-"""Automated end-to-end tests for the Aegis Laptop Diagnostics UI using Playwright."""
+"""Automated end-to-end tests for the Xflash Hardware Diagnostics UI using Playwright."""
 import threading
 import unittest
 from tempfile import NamedTemporaryFile
@@ -6,8 +6,8 @@ from pathlib import Path
 
 from playwright.sync_api import sync_playwright
 
-from laptop_inspector.db import Database
-from laptop_inspector.web.server import create_server
+from xflash.db import Database
+from xflash.web.server import create_server
 
 TEST_HOST = "127.0.0.1"
 TEST_PORT = 8923
@@ -43,7 +43,7 @@ class UITestsPlaywright(unittest.TestCase):
 
     def test_dashboard_loads_and_has_branding(self):
         self.page.goto(f"http://{TEST_HOST}:{TEST_PORT}")
-        self.assertIn("Aegis", self.page.title())
+        self.assertIn("Xflash", self.page.title())
 
         # Check brand and navigation tabs
         self.assertTrue(self.page.locator(".brand-title").is_visible())

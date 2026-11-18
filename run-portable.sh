@@ -43,7 +43,7 @@ if [ -z "$PYTHON_BIN" ]; then
 fi
 
 echo "[Xflash] Starting zero-trace portable diagnostics from USB..."
-echo "[Xflash] Reports directory: $SCRIPT_DIR/aegis_reports/"
-echo "[Xflash] SQLite database:   $SCRIPT_DIR/aegis_data/inspections.sqlite3"
+echo "[Xflash] Reports directory: $SCRIPT_DIR/xflash_reports/"
+echo "[Xflash] SQLite database:   $SCRIPT_DIR/xflash_data/inspections.sqlite3"
 
-exec "$PYTHON_BIN" -m laptop_inspector.cli serve --portable "$@"
+exec "$PYTHON_BIN" -m xflash.cli serve --portable "$@"

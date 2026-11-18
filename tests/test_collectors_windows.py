@@ -2,8 +2,8 @@
 import json
 import unittest
 
-from laptop_inspector.collectors.base import CommandResult
-from laptop_inspector.collectors.windows import WindowsCollector
+from xflash.collectors.base import CommandResult
+from xflash.collectors.windows import WindowsCollector
 
 
 class WindowsCollectorTests(unittest.TestCase):

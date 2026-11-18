@@ -142,7 +142,7 @@ pip install -e .
 # Start local server and open browser (any of these work):
 ./xflash serve --port 8080
 python3 run.py --port 8080
-python3 -m laptop_inspector.web.server --port 8080
+python3 -m xflash.web.server --port 8080
 ```
 Open **`http://127.0.0.1:8080`**:
 - Press **`Ctrl+K`** to open the Command Palette.

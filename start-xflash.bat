@@ -99,7 +99,7 @@ exit /b 1
 :Launch
 echo [Xflash] Found Python interpreter: !PY_CMD!
 echo [Xflash] Starting zero-trace portable diagnostics on http://127.0.0.1:8080 ...
-start "" !PY_CMD! -m laptop_inspector.cli serve --portable
+start "" !PY_CMD! -m xflash.cli serve --portable
 timeout /t 2 /nobreak >nul
 if "%~1"=="--lite" (
     start "" http://127.0.0.1:8080/lite

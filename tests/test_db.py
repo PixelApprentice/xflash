@@ -5,8 +5,8 @@ import unittest
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 
-from laptop_inspector.analysis import analyze_snapshot
-from laptop_inspector.db import (
+from xflash.analysis import analyze_snapshot
+from xflash.db import (
     Database,
     get_default_db_path,
     get_portable_dir,
@@ -92,20 +92,32 @@ class PortableModeTests(unittest.TestCase):
 
     def test_get_portable_dir_override(self):
         with tempfile.TemporaryDirectory() as tmpdir:
+            os.environ["XFLASH_PORTABLE_DIR"] = tmpdir
+            resolved = get_portable_dir()
+            self.assertEqual(resolved, Path(tmpdir).resolve())
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            os.environ.pop("XFLASH_PORTABLE_DIR", None)
             os.environ["AEGIS_PORTABLE_DIR"] = tmpdir
             resolved = get_portable_dir()
             self.assertEqual(resolved, Path(tmpdir).resolve())
 
     def test_is_portable_mode_env(self):
         with tempfile.TemporaryDirectory() as tmpdir:
-            os.environ["AEGIS_PORTABLE_DIR"] = tmpdir
+            os.environ["XFLASH_PORTABLE_DIR"] = tmpdir
+            os.environ.pop("XFLASH_PORTABLE", None)
             os.environ.pop("AEGIS_PORTABLE", None)
             os.environ.pop("LAPTOP_INSPECTOR_PORTABLE", None)
 
             # In an empty temp dir with no .portable file, returns False
             self.assertFalse(is_portable_mode())
 
-            # Setting AEGIS_PORTABLE enables it
+            # Setting XFLASH_PORTABLE enables it
+            os.environ["XFLASH_PORTABLE"] = "1"
+            self.assertTrue(is_portable_mode())
+            os.environ.pop("XFLASH_PORTABLE")
+
+            # Setting AEGIS_PORTABLE enables it (backward compatibility)
             os.environ["AEGIS_PORTABLE"] = "1"
             self.assertTrue(is_portable_mode())
 
@@ -116,7 +128,8 @@ class PortableModeTests(unittest.TestCase):
 
     def test_is_portable_mode_marker_file(self):
         with tempfile.TemporaryDirectory() as tmpdir:
-            os.environ["AEGIS_PORTABLE_DIR"] = tmpdir
+            os.environ["XFLASH_PORTABLE_DIR"] = tmpdir
+            os.environ.pop("XFLASH_PORTABLE", None)
             os.environ.pop("AEGIS_PORTABLE", None)
             os.environ.pop("LAPTOP_INSPECTOR_PORTABLE", None)
 
@@ -126,9 +139,16 @@ class PortableModeTests(unittest.TestCase):
 
     def test_get_default_db_path_portable_vs_normal(self):
         with tempfile.TemporaryDirectory() as tmpdir:
-            os.environ["AEGIS_PORTABLE_DIR"] = tmpdir
+            os.environ["XFLASH_PORTABLE_DIR"] = tmpdir
             portable_path = get_default_db_path(portable=True)
-            self.assertEqual(portable_path, Path(tmpdir).resolve() / "aegis_data" / "inspections.sqlite3")
+            self.assertEqual(portable_path, Path(tmpdir).resolve() / "xflash_data" / "inspections.sqlite3")
+
+            # Legacy fallback if aegis_data exists
+            aegis_dir = Path(tmpdir).resolve() / "aegis_data"
+            aegis_dir.mkdir(parents=True, exist_ok=True)
+            (aegis_dir / "inspections.sqlite3").touch()
+            legacy_path = get_default_db_path(portable=True)
+            self.assertEqual(legacy_path, aegis_dir / "inspections.sqlite3")
 
             normal_path = get_default_db_path(portable=False)
             self.assertNotEqual(normal_path, portable_path)
@@ -136,9 +156,17 @@ class PortableModeTests(unittest.TestCase):
 
     def test_get_reports_dir(self):
         with tempfile.TemporaryDirectory() as tmpdir:
-            os.environ["AEGIS_PORTABLE_DIR"] = tmpdir
+            os.environ["XFLASH_PORTABLE_DIR"] = tmpdir
             reports_dir = get_reports_dir(portable=True)
-            self.assertEqual(reports_dir, Path(tmpdir).resolve() / "aegis_reports")
+            self.assertEqual(reports_dir, Path(tmpdir).resolve() / "xflash_reports")
+            self.assertTrue(reports_dir.is_dir())
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            os.environ["XFLASH_PORTABLE_DIR"] = tmpdir
+            legacy_rep = Path(tmpdir).resolve() / "aegis_reports"
+            legacy_rep.mkdir(parents=True, exist_ok=True)
+            reports_dir = get_reports_dir(portable=True)
+            self.assertEqual(reports_dir, legacy_rep)
             self.assertTrue(reports_dir.is_dir())
 
 

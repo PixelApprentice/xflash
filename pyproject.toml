@@ -54,14 +54,14 @@ Repository = "https://github.com/PixelApprentice/xflash.git"
 Issues = "https://github.com/PixelApprentice/xflash/issues"
 
 [project.scripts]
-xflash = "laptop_inspector.cli:main"
-laptop-inspector = "laptop_inspector.cli:main"
+xflash = "xflash.cli:main"
+laptop-inspector = "xflash.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.setuptools.package-data]
-"laptop_inspector.web" = ["static/*"]
+"xflash.web" = ["static/*"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]

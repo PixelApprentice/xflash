@@ -1,11 +1,11 @@
-# Aegis Laptop Diagnostics - Portable Mode Configuration
+# Xflash Hardware Diagnostics - Portable Mode Configuration
 # ----------------------------------------------------------------------------
-# When this marker file is present, Aegis runs in zero-trace portable USB mode.
+# When this marker file is present, Xflash runs in zero-trace portable USB mode.
 # All inspection databases and generated HTML reports are kept encapsulated
 # within this directory structure:
 #
-#   ./aegis_data/inspections.sqlite3   <- Local inspection history on USB
-#   ./aegis_reports/                   <- Exported HTML/JSON buyer reports
+#   ./xflash_data/inspections.sqlite3   <- Local inspection history on USB
+#   ./xflash_reports/                   <- Exported HTML/JSON buyer reports
 #
 # No files, logs, or cache directories are written to the host computer's
 # user profile, %APPDATA%, or ~/.local/share/.

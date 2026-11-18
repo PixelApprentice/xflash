@@ -3,8 +3,8 @@ import json
 import unittest
 from pathlib import Path
 
-from laptop_inspector.analysis import analyze_snapshot, analyze_battery, analyze_memory, analyze_storage, validate_snapshot_shape
-from laptop_inspector.report import to_html, to_json
+from xflash.analysis import analyze_snapshot, analyze_battery, analyze_memory, analyze_storage, validate_snapshot_shape
+from xflash.report import to_html, to_json
 
 FIXTURE = Path(__file__).parents[1] / "examples" / "sample_session.json"
 

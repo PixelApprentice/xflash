@@ -20,7 +20,7 @@ def _iso_now() -> str:
 
 def get_portable_dir() -> Path:
     """Return the base directory for portable mode (where .portable or repository root is located)."""
-    env_dir = os.environ.get("AEGIS_PORTABLE_DIR")
+    env_dir = os.environ.get("XFLASH_PORTABLE_DIR") or os.environ.get("AEGIS_PORTABLE_DIR")
     if env_dir:
         return Path(env_dir).resolve()
 
@@ -34,6 +34,8 @@ def get_portable_dir() -> Path:
 
 def is_portable_mode() -> bool:
     """Return True if portable mode is requested via env, flag, or marker file."""
+    if os.environ.get("XFLASH_PORTABLE") in ("1", "true", "yes", "on"):
+        return True
     if os.environ.get("AEGIS_PORTABLE") in ("1", "true", "yes", "on"):
         return True
     if os.environ.get("LAPTOP_INSPECTOR_PORTABLE") in ("1", "true", "yes", "on"):
@@ -48,13 +50,16 @@ def get_default_db_path(portable: bool | None = None) -> Path:
         portable = is_portable_mode()
 
     if portable:
-        return get_portable_dir() / "aegis_data" / "inspections.sqlite3"
+        p_dir = get_portable_dir()
+        if (p_dir / "aegis_data" / "inspections.sqlite3").is_file() and not (p_dir / "xflash_data" / "inspections.sqlite3").is_file():
+            return p_dir / "aegis_data" / "inspections.sqlite3"
+        return p_dir / "xflash_data" / "inspections.sqlite3"
 
     # Normal mode: platform standard app data
     if os.name == "nt":
         base = Path(os.environ.get("LOCALAPPDATA", Path.home() / "AppData" / "Local"))
-        return base / "laptop-buyer-kit" / "inspections.sqlite3"
-    return Path.home() / ".local" / "share" / "laptop-buyer-kit" / "inspections.sqlite3"
+        return base / "xflash" / "inspections.sqlite3"
+    return Path.home() / ".local" / "share" / "xflash" / "inspections.sqlite3"
 
 
 def get_reports_dir(portable: bool | None = None) -> Path:
@@ -63,9 +68,13 @@ def get_reports_dir(portable: bool | None = None) -> Path:
         portable = is_portable_mode()
 
     if portable:
-        p = get_portable_dir() / "aegis_reports"
+        p_dir = get_portable_dir()
+        if (p_dir / "aegis_reports").is_dir() and not (p_dir / "xflash_reports").is_dir():
+            p = p_dir / "aegis_reports"
+        else:
+            p = p_dir / "xflash_reports"
     else:
-        p = Path.home() / "Documents" / "Aegis_Reports"
+        p = Path.home() / "Documents" / "Xflash_Reports"
     p.mkdir(parents=True, exist_ok=True)
     return p
 

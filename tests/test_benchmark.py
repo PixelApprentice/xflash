@@ -1,6 +1,6 @@
 """Unit tests for the CPU thermal dissipation benchmark module."""
 import unittest
-from laptop_inspector.benchmark import run_cpu_pulse
+from xflash.benchmark import run_cpu_pulse
 
 
 class MockCollector:

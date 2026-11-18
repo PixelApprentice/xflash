@@ -2,9 +2,9 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from laptop_inspector.analysis import analyze_snapshot
-from laptop_inspector.collectors.base import safe_exec
-from laptop_inspector.collectors.linux import LinuxCollector, _parse_edid
+from xflash.analysis import analyze_snapshot
+from xflash.collectors.base import safe_exec
+from xflash.collectors.linux import LinuxCollector, _parse_edid
 
 
 class SafeExecTests(unittest.TestCase):
