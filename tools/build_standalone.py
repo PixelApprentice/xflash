@@ -19,7 +19,7 @@ ROOT_DIR = Path(__file__).resolve().parent.parent
 
 
 def build_zipapp(output_path: Path) -> bool:
-    """Package the laptop_inspector package into a standalone .pyz using stdlib zipapp."""
+    """Package the xflash package into a standalone .pyz using stdlib zipapp."""
     print("=" * 76)
     print(" BUILDING STANDALONE ZIPAPP (xflash.pyz)")
     print("=" * 76)
@@ -29,16 +29,16 @@ def build_zipapp(output_path: Path) -> bool:
         shutil.rmtree(build_dir)
     build_dir.mkdir(parents=True, exist_ok=True)
 
-    # Copy src/laptop_inspector
-    src_pkg = ROOT_DIR / "src" / "laptop_inspector"
-    dest_pkg = build_dir / "laptop_inspector"
+    # Copy src/xflash
+    src_pkg = ROOT_DIR / "src" / "xflash"
+    dest_pkg = build_dir / "xflash"
     shutil.copytree(src_pkg, dest_pkg)
 
     # Create __main__.py inside staging
     main_file = build_dir / "__main__.py"
     main_file.write_text(
         "import sys\n"
-        "from laptop_inspector.cli import main\n"
+        "from xflash.cli import main\n"
         "if __name__ == '__main__':\n"
         "    sys.exit(main())\n",
         encoding="utf-8",
@@ -76,11 +76,11 @@ def build_pyinstaller(dist_dir: Path) -> bool:
         print("Falling back to Python Embeddable runtime or ZipApp package.")
         return False
 
-    static_dir = ROOT_DIR / "src" / "laptop_inspector" / "web" / "static"
-    cli_entry = ROOT_DIR / "src" / "laptop_inspector" / "cli.py"
+    static_dir = ROOT_DIR / "src" / "xflash" / "web" / "static"
+    cli_entry = ROOT_DIR / "run.py"
 
     separator = ";" if os.name == "nt" else ":"
-    add_data = f"{static_dir}{separator}laptop_inspector/web/static"
+    add_data = f"{static_dir}{separator}xflash/web/static"
 
     cmd = [
         sys.executable,
@@ -91,6 +91,8 @@ def build_pyinstaller(dist_dir: Path) -> bool:
         "--onefile",
         "--name",
         "xflash",
+        "--paths",
+        str(ROOT_DIR / "src"),
         "--add-data",
         add_data,
         "--distpath",
@@ -113,12 +115,18 @@ def build_pyinstaller(dist_dir: Path) -> bool:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Package Xflash as a standalone single executable or archive.")
+    parser.add_argument("--all", action="store_true", help="Build both PyInstaller binary and stdlib zipapp archive")
     parser.add_argument("--pyinstaller", action="store_true", help="Compile single-file binary with PyInstaller")
     parser.add_argument("--zipapp", action="store_true", help="Create .pyz zipapp archive using Python stdlib")
     parser.add_argument("--out", type=Path, help="Output destination path")
     args = parser.parse_args()
 
-    if args.pyinstaller:
+    if args.all:
+        dist_dir = args.out or (ROOT_DIR / "dist")
+        p_ok = build_pyinstaller(dist_dir)
+        z_ok = build_zipapp(dist_dir / "xflash.pyz")
+        return 0 if (p_ok and z_ok) else 1
+    elif args.pyinstaller:
         dist_dir = args.out or (ROOT_DIR / "dist")
         success = build_pyinstaller(dist_dir)
         return 0 if success else 1
