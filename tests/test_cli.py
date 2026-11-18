@@ -7,9 +7,9 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from laptop_inspector.analysis import analyze_snapshot
-from laptop_inspector.cli import build_parser, main
-from laptop_inspector.cli_ui import format_terminal_report
+from xflash.analysis import analyze_snapshot
+from xflash.cli import build_parser, main
+from xflash.cli_ui import format_terminal_report
 
 FIXTURE_PATH = Path(__file__).parents[1] / "examples" / "sample_session.json"
 
@@ -99,6 +99,69 @@ class CLITests(unittest.TestCase):
         self.assertEqual(exit_code, 0)
         out = f.getvalue()
         self.assertIn("<!doctype html>", out.lower())
+
+    def test_cli_tui_subcommand_plain_output(self):
+        f = io.StringIO()
+        with patch("sys.stdout", f):
+            exit_code = main(["tui", str(FIXTURE_PATH), "--plain", "--no-color"])
+        self.assertEqual(exit_code, 0)
+        out = f.getvalue()
+        self.assertIn("offline", out)
+        self.assertIn("read only", out)
+        self.assertIn("BAT", out)
+        self.assertIn("SSD", out)
+        self.assertIn("MEM", out)
+
+    def test_cli_tui_subcommand_once_snapshot(self):
+        f = io.StringIO()
+        with patch("sys.stdout", f):
+            exit_code = main(["tui", str(FIXTURE_PATH), "--once", "storage", "--no-color", "--ascii"])
+        self.assertEqual(exit_code, 0)
+        lines = f.getvalue().rstrip("\n").split("\n")
+        self.assertEqual(len(lines), 36)
+        self.assertIn("Drive health", f.getvalue())
+
+    def test_cli_tui_subcommand_once_live_battery(self):
+        f = io.StringIO()
+        with patch("sys.stdout", f):
+            exit_code = main(["tui", "--once", "battery", "--no-color", "--ascii"])
+        self.assertEqual(exit_code, 0)
+        out = f.getvalue()
+        lines = out.rstrip("\n").split("\n")
+        self.assertEqual(len(lines), 36)
+        self.assertIn("Battery health", out)
+        self.assertIn("BAT", out)
+
+    def test_battery_capacity_calculation_accuracy(self):
+        from xflash.tui.real import to_session
+        # Synthetic fixture: 43,200 / 60,000 mWh -> exactly 72.0%
+        fixture_snap = {
+            "battery": {
+                "design_capacity_mwh": 60000.0,
+                "full_charge_capacity_mwh": 43200.0,
+                "cycle_count": 30,
+            }
+        }
+        fixture_report = analyze_snapshot(fixture_snap)
+        fixture_sess = to_session(fixture_snap, fixture_report)
+        bat_bay_fixture = next(b for b in fixture_sess.bays if b.name == "BAT")
+        self.assertEqual(bat_bay_fixture.value, "72.0 %")
+
+        # Real hardware measurements: 41,770 / 50,014 mWh -> exactly 83.5%
+        real_snap = {
+            "battery": {
+                "design_capacity_mwh": 50014.0,
+                "full_charge_capacity_mwh": 41770.0,
+                "cycle_count": 432,
+            }
+        }
+        real_report = analyze_snapshot(real_snap)
+        real_sess = to_session(real_snap, real_report)
+        bat_bay_real = next(b for b in real_sess.bays if b.name == "BAT")
+        self.assertEqual(bat_bay_real.value, "83.5 %")
+        # Ensure retention percentage in findings matches
+        rule_f = next(f for f in real_sess.findings if f.id == "BAT-01")
+        self.assertEqual(rule_f.value, "83.5 %")
 
 
 if __name__ == "__main__":

@@ -53,6 +53,18 @@ def build_parser() -> argparse.ArgumentParser:
     analyze_parser.add_argument("--no-color", action="store_true", help="Disable ANSI color output")
     analyze_parser.add_argument("--save-db", action="store_true", help="Save session to local SQLite database")
 
+    # 4. TUI Command (interactive terminal UI)
+    tui_parser = subparsers.add_parser("tui", help="Interactive terminal UI (rich, keyboard-driven)")
+    tui_parser.add_argument("snapshot", nargs="?", type=Path, help="Optional snapshot JSON file to inspect in TUI")
+    tui_parser.add_argument("--session", metavar="REF", help="Open a saved session instead of scanning")
+    tui_parser.add_argument("--plain", action="store_true", help="Plain text report (default when output is piped)")
+    tui_parser.add_argument("--once", metavar="SCREEN", nargs="?", const="rules",
+                            help="Print one frame and exit (home, rules, scan, palette, help, or a page id)")
+    tui_parser.add_argument("--width", type=int, help="Force terminal width in columns")
+    tui_parser.add_argument("--height", type=int, help="Force terminal height in rows")
+    tui_parser.add_argument("--no-color", action="store_true", help="Disable ANSI colour")
+    tui_parser.add_argument("--ascii", action="store_true", help="ASCII-only glyphs for legacy consoles")
+
     # Global flags
     parser.add_argument("--portable", action="store_true", help="Run in zero-trace portable USB mode")
     parser.add_argument("--no-browser", action="store_true", help="Do not automatically launch web browser on startup")
@@ -184,6 +196,29 @@ def main(argv: list[str] | None = None) -> int:
 
     is_portable = getattr(args, "portable", False)
     no_browser = getattr(args, "no_browser", False)
+
+    if args.subcommand == "tui":
+        # Pass remaining argv through to the TUI's own parser
+        from .tui.cli import main as _tui_main
+        # Reconstruct argv from known tui flags
+        tui_argv = []
+        if getattr(args, "snapshot", None):
+            tui_argv.append(str(args.snapshot))
+        if getattr(args, "session", None):
+            tui_argv += ["--session", str(args.session)]
+        if getattr(args, "plain", False):
+            tui_argv.append("--plain")
+        if getattr(args, "once", None) is not None:
+            tui_argv += ["--once", args.once]
+        if getattr(args, "width", None):
+            tui_argv += ["--width", str(args.width)]
+        if getattr(args, "height", None):
+            tui_argv += ["--height", str(args.height)]
+        if getattr(args, "no_color", False):
+            tui_argv.append("--no-color")
+        if getattr(args, "ascii", False):
+            tui_argv.append("--ascii")
+        return _tui_main(tui_argv)
 
     if args.subcommand in ("scan", "inspect", "check"):
         return _run_scan_command(args)
