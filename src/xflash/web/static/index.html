@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f5f5f7">
   <meta name="color-scheme" content="light dark">
-  <title>Xflash (Aegis) v3.2 — The Honest Hardware Standard · Apple Design Edition</title>
+  <title>Xflash v3.2 — The Honest Hardware Standard · Precision Diagnostics</title>
   <link rel="stylesheet" href="app.css">
 </head>
 <body>
@@ -56,7 +56,7 @@
               <path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 15h3M1 9h3M1 15h3" />
             </svg>
           </div>
-          <span class="brand-title">Xflash <span class="brand-sub">Aegis</span></span>
+          <span class="brand-title">Xflash <span class="brand-sub">Diagnostics</span></span>
         </div>
 
         <!-- Center Tabs -->
@@ -123,6 +123,25 @@
       <!-- TAB 1: DIAGNOSTICS & HARDWARE INSPECTION                       -->
       <!-- ============================================================== -->
       <section id="tab-inspect" class="tab-pane active" role="tabpanel">
+        <!-- Mode Control Banner: Clear Distinction Between Beginner Buyer Mode & Advanced Hardware Lab -->
+        <div class="mode-control-banner" id="modeControlBanner">
+          <div class="mode-banner-left">
+            <div class="mode-tag-pill" id="modeTagPill">
+              <span class="mode-dot"></span>
+              <strong id="modeTagTitle">Beginner Buyer Mode</strong>
+            </div>
+            <p id="modeTagDesc" class="mode-tag-desc">
+              Plain-English verdicts, zero confusing jargon, and actionable price negotiation tips for used laptop buyers.
+            </p>
+          </div>
+          <div class="mode-banner-right">
+            <button type="button" id="modeSwitchBannerBtn" class="btn btn-sm btn-outline mode-banner-btn" title="Toggle between Beginner Buyer Mode and Advanced Hardware Lab">
+              <span id="modeBannerBtnIcon">🔬</span>
+              <span id="modeBannerBtnText">Switch to Advanced Hardware Lab</span>
+            </button>
+          </div>
+        </div>
+
         <!-- Minimalist Workflow Stepper -->
         <div class="workflow-stepper" id="workflowStepper" role="navigation" aria-label="Inspection Workflow Steps">
           <div class="step-node active" data-step="1" title="Input listing claims or auto-detect specs">
@@ -418,7 +437,7 @@
                   <a id="exportHtmlBtn" class="btn btn-sm btn-outline" target="_blank">Download HTML Report</a>
                   <a id="exportJsonBtn" class="btn btn-sm btn-outline" target="_blank">Download JSON</a>
                   <button type="button" id="printReportBtn" class="btn btn-sm btn-outline">Print View</button>
-                  <button type="button" id="saveUsbReportBtn" class="btn btn-sm btn-primary" title="Save HTML and JSON report directly into USB drive ./aegis_reports/"><svg class="icon icon-sm" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Save to USB Reports</button>
+                  <button type="button" id="saveUsbReportBtn" class="btn btn-sm btn-primary" title="Save HTML and JSON report directly into USB drive ./xflash_reports/"><svg class="icon icon-sm" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Save to USB Reports</button>
                   <span id="saveUsbReportStatus" class="text-muted" style="font-size:0.75rem; align-self:center;" role="status" aria-live="polite"></span>
                 </div>
               </div>
@@ -448,7 +467,7 @@
                       <span class="bcard-icon" aria-hidden="true">
                         <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2h12a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/><circle cx="12" cy="14" r="4"/></svg>
                       </span>
-                      <span class="bcard-tag" id="bCardStorageTag">Storage</span>
+                      <span class="bcard-tag" id="bCardStorageTag">Storage SSD</span>
                     </div>
                     <h4 id="bCardStorageTitle">Checking SSD…</h4>
                     <p id="bCardStorageDetail" class="bcard-desc">Validates internal NVMe/SATA health, endurance usage, and read stability.</p>
@@ -458,20 +477,85 @@
                       <span class="bcard-icon" aria-hidden="true">
                         <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
                       </span>
-                      <span class="bcard-tag" id="bCardClaimsTag">Listing Specs</span>
+                      <span class="bcard-tag" id="bCardClaimsTag">RAM &amp; CPU</span>
                     </div>
                     <h4 id="bCardClaimsTitle">Checking claims…</h4>
                     <p id="bCardClaimsDetail" class="bcard-desc">Compares RAM, CPU, and disk size against seller listing claims.</p>
+                  </div>
+                  <div class="beginner-card" id="bCardScreen">
+                    <div class="bcard-top">
+                      <span class="bcard-icon" aria-hidden="true">
+                        <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                      </span>
+                      <span class="bcard-tag" id="bCardScreenTag">Screen</span>
+                    </div>
+                    <h4 id="bCardScreenTitle">Checking display…</h4>
+                    <p id="bCardScreenDetail" class="bcard-desc">Resolution and panel condition. Check for dead pixels and color clarity.</p>
+                    <button type="button" class="btn btn-sm btn-subtle bcard-action-btn" data-jump-tab="tab-screen" style="margin-top:0.4rem; font-size:0.75rem; padding:0.25rem 0.5rem; width:100%;">
+                      📺 1-Click Dead Pixel Check
+                    </button>
+                  </div>
+                  <div class="beginner-card" id="bCardInput">
+                    <div class="bcard-top">
+                      <span class="bcard-icon" aria-hidden="true">
+                        <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="6" y1="8" x2="6.01" y2="8"/><line x1="10" y1="8" x2="10.01" y2="8"/><line x1="14" y1="8" x2="14.01" y2="8"/><line x1="18" y1="8" x2="18.01" y2="8"/></svg>
+                      </span>
+                      <span class="bcard-tag" id="bCardInputTag">Keyboard &amp; Pad</span>
+                    </div>
+                    <h4 id="bCardInputTitle">Testing switches…</h4>
+                    <p id="bCardInputDetail" class="bcard-desc">Checks for double-typing keys, worn switches, and responsive trackpad zones.</p>
+                    <button type="button" class="btn btn-sm btn-subtle bcard-action-btn" data-jump-tab="tab-input" style="margin-top:0.4rem; font-size:0.75rem; padding:0.25rem 0.5rem; width:100%;">
+                      ⌨ Test Keys &amp; Trackpad
+                    </button>
                   </div>
                   <div class="beginner-card" id="bCardThermals">
                     <div class="bcard-top">
                       <span class="bcard-icon" aria-hidden="true">
                         <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></svg>
                       </span>
-                      <span class="bcard-tag" id="bCardThermalsTag">Thermals</span>
+                      <span class="bcard-tag" id="bCardThermalsTag">Cooling &amp; Fan</span>
                     </div>
                     <h4 id="bCardThermalsTitle">Checking thermals…</h4>
                     <p id="bCardThermalsDetail" class="bcard-desc">Monitors processor temperature and cooling dissipation headroom.</p>
+                    <button type="button" class="btn btn-sm btn-subtle bcard-action-btn" data-jump-tab="tab-benchmark" style="margin-top:0.4rem; font-size:0.75rem; padding:0.25rem 0.5rem; width:100%;">
+                      ❄ Test Fan Response
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Beginner Buyer Negotiation Box: What to Say to the Seller -->
+                <div class="beginner-bargain-box" id="beginnerBargainBox" style="margin-top:1.25rem; padding:1.15rem; background:var(--bg-subtle); border:1px solid var(--border-color); border-radius:var(--radius-md);">
+                  <div class="bbargain-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.85rem;">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                      <svg class="icon icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="color:var(--primary);"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                      <h4 style="margin:0; font-size:0.95rem; font-family:var(--font-heading);">What to Say to the Seller (Price Negotiation Advice)</h4>
+                    </div>
+                    <span class="badge status-passed" id="bbargainBadge" style="font-size:0.75rem;">Actionable Advice</span>
+                  </div>
+                  <div class="bbargain-body">
+                    <div class="bbargain-offer-row" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:0.75rem; margin-bottom:0.85rem;">
+                      <div class="bbargain-offer-card" style="padding:0.6rem 0.75rem; background:var(--bg-surface); border:1px solid var(--border-color); border-radius:var(--radius-sm);">
+                        <span class="bbargain-offer-sub" style="display:block; font-size:0.72rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em;">Asking Price</span>
+                        <strong class="bbargain-offer-val" id="bbargainAskingVal" style="font-size:1.15rem; color:var(--text-main); font-family:var(--font-mono);">$---</strong>
+                      </div>
+                      <div class="bbargain-offer-card highlight" style="padding:0.6rem 0.75rem; background:var(--primary-subtle); border:1px solid var(--primary-border); border-radius:var(--radius-sm);">
+                        <span class="bbargain-offer-sub" style="display:block; font-size:0.72rem; color:var(--primary); text-transform:uppercase; letter-spacing:0.04em; font-weight:700;">Fair Counter-Offer</span>
+                        <strong class="bbargain-offer-val" id="bbargainOfferVal" style="font-size:1.15rem; color:var(--primary); font-family:var(--font-mono);">$---</strong>
+                      </div>
+                      <div class="bbargain-offer-card" style="padding:0.6rem 0.75rem; background:var(--bg-surface); border:1px solid var(--border-color); border-radius:var(--radius-sm);">
+                        <span class="bbargain-offer-sub" style="display:block; font-size:0.72rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em;">Recommended Discount</span>
+                        <strong class="bbargain-offer-val" id="bbargainDiscountVal" style="font-size:1.15rem; color:var(--severity-high); font-family:var(--font-mono);">$---</strong>
+                      </div>
+                    </div>
+                    <div class="bbargain-script-card" style="padding:0.75rem 1rem; background:var(--bg-surface); border-left:4px solid var(--primary); border-radius:var(--radius-xs);">
+                      <div style="display:flex; align-items:center; gap:6px; margin-bottom:0.35rem; color:var(--primary); font-size:0.78rem; font-weight:700;">
+                        <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                        <span>Word-for-Word Negotiation Script (Say this to the seller):</span>
+                      </div>
+                      <p id="bbargainScriptText" class="bbargain-script-p" style="margin:0; font-size:0.88rem; color:var(--text-main); line-height:1.5;">
+                        "I ran an offline diagnostic test on the laptop hardware. The components check out, but the battery capacity has lost significant charge and will need replacement soon. Based on that, would you be willing to do a small discount today?"
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1320,7 +1404,7 @@
               Diagnostics Overview
             </button>
             <div class="station-header-title">
-              <h2>About Aegis &amp; Project Support</h2>
+              <h2>About Xflash &amp; Project Support</h2>
               <p>Offline architecture principles, zero-trace execution mode, and donation options</p>
             </div>
           </div>
@@ -1328,8 +1412,8 @@
 
         <div class="about-grid">
           <div class="card-box">
-            <h2>About Aegis Laptop Diagnostics</h2>
-            <p><strong>Aegis (Laptop Buyer Kit v2.0)</strong> is an offline-first, open-source laptop diagnostics platform engineered for used hardware buyers, refurbishers, and technicians.</p>
+            <h2>About Xflash Hardware Diagnostics</h2>
+            <p><strong>Xflash</strong> is an offline-first, open-source laptop diagnostics platform engineered for used hardware buyers, refurbishers, and technicians.</p>
             
             <h3>Core Engineering Principles</h3>
             <ul class="feature-list">
@@ -1341,7 +1425,7 @@
 
             <h3>Dual Execution Modes: Portable vs. Normal</h3>
             <ul class="feature-list">
-              <li><strong>USB Portable Mode:</strong> When launched from a USB drive via <code>start-xflash.bat</code> / <code>start-aegis.bat</code> (Windows) or <code>./run-portable.sh</code> (Linux), all inspection histories and exported reports are written directly to <code>./aegis_data/</code> and <code>./aegis_reports/</code> on the USB stick. Zero files, registry keys, or temp directories are left on the target laptop.</li>
+              <li><strong>USB Portable Mode:</strong> When launched from a USB drive via <code>start-xflash.bat</code> (Windows) or <code>./run-portable.sh</code> (Linux), all inspection histories and exported reports are written directly to <code>./xflash_data/</code> and <code>./xflash_reports/</code> on the USB stick. Zero files, registry keys, or temp directories are left on the target laptop.</li>
               <li><strong>System Mode:</strong> Standard local installation storing records in user application directories (<code>~/.local/share/xflash/</code>).</li>
             </ul>
 

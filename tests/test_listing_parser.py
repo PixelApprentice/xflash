@@ -1,7 +1,7 @@
 """Unit tests for the offline seller listing claim parser."""
 import unittest
 
-from laptop_inspector.listing_parser import parse_listing_claims, suggest_bargaining_discount
+from xflash.listing_parser import parse_listing_claims, suggest_bargaining_discount
 
 
 class ListingParserTests(unittest.TestCase):
@@ -58,6 +58,31 @@ class ListingParserTests(unittest.TestCase):
         self.assertGreater(discount["suggested_discount_usd"], 80)
         self.assertEqual(discount["verdict_code"], "NEGOTIATE_DISCOUNT")
         self.assertTrue(len(discount["bargaining_points"]) >= 2)
+
+
+    def test_parse_listing_with_price(self):
+        text = "Lenovo ThinkPad T14 Gen 2 16GB RAM 512GB SSD - Asking $450 cash"
+        claims = parse_listing_claims(text)
+        self.assertEqual(claims.get("ram_gib"), 16)
+        self.assertEqual(claims.get("storage_gb"), 512)
+        self.assertEqual(claims.get("asking_price"), 450)
+
+    def test_suggest_bargaining_discount_with_asking_price_and_script(self):
+        # Asking $500, with battery wear and RAM shortfall
+        discount = suggest_bargaining_discount(
+            findings=[{"title": "RAM shortfall", "severity": "warning"}],
+            ram_match=False,
+            storage_match=True,
+            battery_wear_pct=40,
+            thermal_throttling=False,
+            asking_price=500,
+        )
+        self.assertEqual(discount["asking_price_usd"], 500)
+        self.assertGreater(discount["suggested_discount_usd"], 0)
+        self.assertEqual(discount["fair_offer_usd"], 500 - discount["suggested_discount_usd"])
+        self.assertIn("negotiation_script", discount)
+        self.assertTrue(len(discount["negotiation_script"]) > 20)
+        self.assertIn("$", discount["negotiation_script"])
 
 
 if __name__ == "__main__":

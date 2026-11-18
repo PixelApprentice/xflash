@@ -1,5 +1,5 @@
 /**
- * Aegis Laptop Diagnostics (Laptop Buyer Kit v2.1)
+ * Xflash Hardware Diagnostics (v3.2)
  * 100% offline, local browser orchestration.
  * Zero external CDNs, zero telemetry, full privacy.
  */
@@ -265,6 +265,24 @@ class App {
       stripExpert.textContent = isExpert ? "Expert Mode" : "Buyer Mode";
       stripExpert.style.color = isExpert ? "var(--primary)" : "inherit";
     }
+
+    // Update Mode Control Banner
+    const modeTitle = document.getElementById("modeTagTitle");
+    const modeDesc = document.getElementById("modeTagDesc");
+    const modeBtnText = document.getElementById("modeBannerBtnText");
+    const modeBtnIcon = document.getElementById("modeBannerBtnIcon");
+    const modeBanner = document.getElementById("modeControlBanner");
+    if (modeTitle && modeDesc && modeBtnText && modeBtnIcon) {
+      modeTitle.textContent = isExpert ? "Hardware Lab (Advanced Mode)" : "Beginner Buyer Mode";
+      modeDesc.textContent = isExpert
+        ? "Full sensor telemetry, raw register hex, NVMe SMART logs, ACPI thermal rise velocity, and motherboard schematics."
+        : "Plain-English verdicts, zero confusing jargon, and actionable price negotiation tips for used laptop buyers.";
+      modeBtnText.textContent = isExpert ? "Switch to Beginner Buyer Mode" : "Switch to Advanced Hardware Lab";
+      modeBtnIcon.textContent = isExpert ? "🟢" : "🔬";
+    }
+    if (modeBanner) {
+      modeBanner.classList.toggle("expert-active", isExpert);
+    }
   }
 
   // --------------------------------------------------------------------------
@@ -367,6 +385,17 @@ class App {
     document.getElementById("expertModeToggle").addEventListener("change", (e) => {
       this.applyMode(e.target.checked);
     });
+
+    const modeBannerBtn = document.getElementById("modeSwitchBannerBtn");
+    if (modeBannerBtn) {
+      modeBannerBtn.addEventListener("click", () => {
+        const toggle = document.getElementById("expertModeToggle");
+        if (toggle) {
+          toggle.checked = !toggle.checked;
+          this.applyMode(toggle.checked);
+        }
+      });
+    }
 
     // Sliders in Expert Mode
     const batSlider = document.getElementById("threshBatteryWarn");
@@ -841,6 +870,63 @@ class App {
         if (tTag) tTag.textContent = "Active";
       }
     }
+
+    // Screen / Display
+    const scTitle = document.getElementById("bCardScreenTitle");
+    const scDesc = document.getElementById("bCardScreenDetail");
+    const scTag = document.getElementById("bCardScreenTag");
+    if (scTitle && scDesc) {
+      const manualChecks = session.manual_checks || {};
+      const dispCheck = manualChecks.display_pixels;
+      const dispInfo = snap.display || {};
+      const res = dispInfo.resolution || (dispInfo.current_mode ? `${dispInfo.current_mode.width}x${dispInfo.current_mode.height}` : null);
+
+      if (dispCheck === "pass") {
+        scTitle.innerHTML = `<span style="color:var(--severity-passed); font-weight:700;">Screen Verified</span> · Clean Pixels`;
+        scDesc.textContent = "Visual check confirmed: zero dead pixels, tinting, or corner backlight bleed.";
+        if (scTag) scTag.textContent = "Verified";
+      } else if (dispCheck === "fail") {
+        scTitle.innerHTML = `<span style="color:var(--severity-critical); font-weight:700;">Screen Defect</span> · Dead Pixels / Bleed`;
+        scDesc.textContent = "Display panel flagged during pixel test. Inspect for stuck subpixels or bleed.";
+        if (scTag) scTag.textContent = "Defect";
+      } else if (res) {
+        scTitle.innerHTML = `<span style="color:var(--severity-passed); font-weight:700;">Panel Active</span> · ${res}`;
+        scDesc.textContent = `Display initialized at ${res}. Click below to cycle full-screen colors and inspect pixels.`;
+        if (scTag) scTag.textContent = "Ready";
+      } else {
+        scTitle.textContent = "Screen Test Ready";
+        scDesc.textContent = "Run the 1-click dead pixel studio to visually check panel consistency and subpixels.";
+        if (scTag) scTag.textContent = "Ready";
+      }
+    }
+
+    // Input / Keyboard & Trackpad
+    const inTitle = document.getElementById("bCardInputTitle");
+    const inDesc = document.getElementById("bCardInputDetail");
+    const inTag = document.getElementById("bCardInputTag");
+    if (inTitle && inDesc) {
+      const manualChecks = session.manual_checks || {};
+      const kbCheck = manualChecks.keyboard_response;
+      const keysCount = this.verifiedKeys ? this.verifiedKeys.size : 0;
+
+      if (kbCheck === "pass" || keysCount >= 35) {
+        inTitle.innerHTML = `<span style="color:var(--severity-passed); font-weight:700;">Input Verified</span> · ${keysCount > 0 ? keysCount + ' Keys Tested' : 'No Ghosting'}`;
+        inDesc.textContent = "Keyboard switches and trackpad responsive. No ghosting, sticking, or dead keys observed.";
+        if (inTag) inTag.textContent = "Verified";
+      } else if (kbCheck === "fail") {
+        inTitle.innerHTML = `<span style="color:var(--severity-critical); font-weight:700;">Key/Trackpad Fault</span> · Sticky Switch`;
+        inDesc.textContent = "One or more physical keys failed registration or trackpad exhibits dead zones.";
+        if (inTag) inTag.textContent = "Fault";
+      } else if (keysCount > 0) {
+        inTitle.innerHTML = `<span style="color:var(--primary); font-weight:700;">Testing In Progress</span> · ${keysCount} Keys Tested`;
+        inDesc.textContent = "Interactive matrix active. Continue typing keys to verify switch reliability.";
+        if (inTag) inTag.textContent = "Testing";
+      } else {
+        inTitle.textContent = "Interactive Switch Test";
+        inDesc.textContent = "Open the input matrix to type keys and verify trackpad multi-touch gesture tracking.";
+        if (inTag) inTag.textContent = "Ready";
+      }
+    }
   }
 
   async saveToUsbReports() {
@@ -1220,13 +1306,16 @@ class App {
     const adviceCard = document.getElementById("bargainingAdviceCard");
     const adviceSummary = document.getElementById("bargainingAdviceSummary");
     const adviceList = document.getElementById("bargainingAdviceList");
-    if (adviceCard && adviceSummary && adviceList) {
+    const bbBox = document.getElementById("beginnerBargainBox");
+
+    if ((adviceCard && adviceSummary && adviceList) || bbBox) {
       const batMwh = snapshot.battery?.full_charge_capacity_mwh || 0;
       const desMwh = snapshot.battery?.design_capacity_mwh || 0;
       const batWear = (desMwh > 0 && batMwh > 0) ? Math.max(0, 100 - (batMwh / desMwh * 100)) : null;
       const mediaErr = snapshot.storage?.devices?.[0]?.smart?.media_errors || 0;
       const isRamMatch = (ramVerdict === "MATCH" || ramVerdict === "VRAM RESERVED" || claimedRam === "Not specified");
       const isStorMatch = (storVerdict === "MATCH" || claimedStorage === "Not specified");
+      const askingPriceVal = snapshot.claims?.asking_price || this.extractedAskingPrice || null;
 
       fetch("/api/bargaining-advice", {
         method: "POST",
@@ -1236,18 +1325,51 @@ class App {
           ram_match: isRamMatch,
           storage_match: isStorMatch,
           battery_wear_pct: batWear,
-          media_errors: mediaErr
+          media_errors: mediaErr,
+          asking_price: askingPriceVal
         })
       }).then(r => r.json()).then(advice => {
-        if (advice && advice.bargaining_points && advice.bargaining_points.length > 0) {
-          adviceCard.style.display = "block";
-          adviceSummary.textContent = advice.summary;
-          adviceList.innerHTML = advice.bargaining_points.map(pt => `<li>${pt}</li>`).join("");
-        } else {
-          adviceCard.style.display = "none";
+        if (advice) {
+          if (adviceCard && adviceSummary && adviceList) {
+            if (advice.bargaining_points && advice.bargaining_points.length > 0) {
+              adviceCard.style.display = "block";
+              adviceSummary.textContent = advice.summary;
+              adviceList.innerHTML = advice.bargaining_points.map(pt => `<li>${pt}</li>`).join("");
+            } else {
+              adviceCard.style.display = "block";
+              adviceSummary.textContent = advice.summary || "All detected specs align with claims. No discount needed.";
+              adviceList.innerHTML = "<li>Hardware matches claims; battery and thermals are within healthy bounds.</li>";
+            }
+          }
+
+          // Populate Beginner Bargain Box
+          const bAsking = document.getElementById("bbargainAskingVal");
+          const bOffer = document.getElementById("bbargainOfferVal");
+          const bDiscount = document.getElementById("bbargainDiscountVal");
+          const bScript = document.getElementById("bbargainScriptText");
+          const bBadge = document.getElementById("bbargainBadge");
+
+          if (bbBox) {
+            if (bAsking) bAsking.textContent = advice.asking_price_usd ? `$${advice.asking_price_usd}` : "$---";
+            if (bOffer) bOffer.textContent = advice.fair_offer_usd ? `$${advice.fair_offer_usd}` : (advice.suggested_discount_usd > 0 ? `-$${advice.suggested_discount_usd}` : "Fair Ask");
+            if (bDiscount) bDiscount.textContent = advice.suggested_discount_usd > 0 ? `-$${advice.suggested_discount_usd}` : "$0 (Fair)";
+            if (bScript && advice.negotiation_script) bScript.textContent = advice.negotiation_script;
+            if (bBadge) {
+              if (advice.verdict_code === "DO_NOT_BUY") {
+                bBadge.textContent = "Walk Away (Do Not Buy)";
+                bBadge.className = "badge status-critical";
+              } else if (advice.verdict_code === "NEGOTIATE_DISCOUNT") {
+                bBadge.textContent = `Counter-Offer: -$${advice.suggested_discount_usd}`;
+                bBadge.className = "badge status-warning";
+              } else {
+                bBadge.textContent = "Fair Price (Safe to Buy)";
+                bBadge.className = "badge status-passed";
+              }
+            }
+          }
         }
       }).catch(() => {
-        adviceCard.style.display = "none";
+        if (adviceCard) adviceCard.style.display = "none";
       });
     }
   }
@@ -2864,8 +2986,12 @@ class App {
           if (claims.cpu_model) document.getElementById("claimCpu").value = claims.cpu_model;
           if (claims.gpu_model) document.getElementById("claimGpu").value = claims.gpu_model;
           if (claims.display_resolution) document.getElementById("claimDisplay").value = claims.display_resolution;
+          if (claims.asking_price) this.extractedAskingPrice = claims.asking_price;
           extractBtn.textContent = "Extracted!";
           setTimeout(() => { extractBtn.textContent = "Auto-Fill"; }, 1500);
+          if (this.currentSession) {
+            this.renderComparisonTable(this.currentSession);
+          }
         }
       } catch (err) {
         console.warn("Listing auto-extract error", err);

@@ -92,6 +92,11 @@ def parse_listing_claims(text: str) -> dict[str, Any]:
     if res_match:
         claims["display_resolution"] = res_match.group(0).strip()
 
+    # 7. Asking price detection ($450, $ 450, 450 USD, Price: $450)
+    price_match = re.search(r"(?:\$|USD\s*|price[:\s]*\$?|asking[:\s]*\$?)\s*(\d{2,5})\b", cleaned, re.IGNORECASE)
+    if price_match:
+        claims["asking_price"] = int(price_match.group(1))
+
     return claims
 
 
@@ -102,14 +107,18 @@ def suggest_bargaining_discount(
     battery_wear_pct: float | None = None,
     thermal_throttling: bool = False,
     media_errors: int = 0,
+    asking_price: float | int | None = None,
 ) -> dict[str, Any]:
-    """Calculate buyer bargaining leverage and plain-English discount points.
+    """Calculate buyer bargaining leverage, fair counter-offer, and plain-English discount points.
 
     Returns:
     - suggested_discount_usd: int
     - verdict_code: "BUY_RECOMMENDED" | "NEGOTIATE_DISCOUNT" | "DO_NOT_BUY"
     - summary: str
     - bargaining_points: list[str]
+    - asking_price_usd: int | None
+    - fair_offer_usd: int | None
+    - negotiation_script: str
     """
     discount = 0
     points: list[str] = []
@@ -163,16 +172,61 @@ def suggest_bargaining_discount(
     if critical_defect:
         verdict_code = "DO_NOT_BUY"
         summary = "DO NOT BUY: Laptop exhibits severe hardware defects or imminent drive failure."
+        script = (
+            "Thanks for letting me test the laptop. Unfortunately, the hardware diagnostics revealed critical "
+            "hardware errors (such as unrecoverable media errors on the internal storage or failed hardware counters). "
+            "Because this requires immediate part replacement and poses risk of data loss, I'm going to pass on this machine."
+        )
     elif discount > 0:
         verdict_code = "NEGOTIATE_DISCOUNT"
         summary = f"NEGOTIATE ${discount} OFF: Discrepancies or component wear justify a lower price."
+        reasons = []
+        if not ram_match:
+            reasons.append("the physical RAM is lower than advertised")
+        if not storage_match:
+            reasons.append("the internal storage capacity is smaller than listed")
+        if battery_wear_pct and battery_wear_pct >= 20:
+            reasons.append(f"the battery health is worn down by {battery_wear_pct:.0f}%")
+        if thermal_throttling:
+            reasons.append("the cooling heatsink requires thermal servicing")
+        if not reasons and points:
+            reasons.append("diagnostic tests flagged hardware wear items")
+
+        reason_str = " and ".join(reasons) if reasons else "several hardware wear items"
+        if asking_price:
+            fair_offer = max(0, int(asking_price) - discount)
+            script = (
+                f"I just ran the offline hardware inspection. The machine powers on nicely, but {reason_str}. "
+                f"Factoring in the cost of parts/servicing (around ${discount}), I'd be comfortable offering ${fair_offer} today in cash."
+            )
+        else:
+            script = (
+                f"I just ran the offline hardware inspection. The machine powers on nicely, but {reason_str}. "
+                f"To account for the replacement/servicing cost, would you be willing to reduce the asking price by ${discount}?"
+            )
     else:
         verdict_code = "BUY_RECOMMENDED"
         summary = "SAFE TO BUY: Physical hardware matches listing claims with healthy diagnostics."
+        if asking_price:
+            script = (
+                f"I've verified the hardware with the diagnostic suite. The specs match your listing and all component health checks passed clean. "
+                f"I'm happy with the machine and ready to take it for your asking price of ${int(asking_price)}."
+            )
+        else:
+            script = (
+                "I've verified the hardware with the diagnostic suite. The specs match your listing and all component health checks passed clean. "
+                "The laptop looks solid and I'm ready to proceed."
+            )
+
+    asking_val = int(asking_price) if asking_price is not None else None
+    fair_val = max(0, asking_val - discount) if asking_val is not None else None
 
     return {
         "suggested_discount_usd": discount,
         "verdict_code": verdict_code,
         "summary": summary,
         "bargaining_points": points,
+        "asking_price_usd": asking_val,
+        "fair_offer_usd": fair_val,
+        "negotiation_script": script,
     }

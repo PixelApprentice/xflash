@@ -225,6 +225,8 @@ class InspectorRequestHandler(SimpleHTTPRequestHandler):
             wear_val = float(battery_wear) if battery_wear is not None else None
             thermal = bool(body.get("thermal_throttling", False))
             media_errs = int(body.get("media_errors", 0))
+            asking = body.get("asking_price")
+            asking_val = float(asking) if asking is not None else None
             advice = suggest_bargaining_discount(
                 findings=findings,
                 ram_match=ram_match,
@@ -232,6 +234,7 @@ class InspectorRequestHandler(SimpleHTTPRequestHandler):
                 battery_wear_pct=wear_val,
                 thermal_throttling=thermal,
                 media_errors=media_errs,
+                asking_price=asking_val,
             )
             self._send_json(advice)
             return
@@ -408,7 +411,7 @@ def run_server(
 ) -> None:
     server = create_server(host=host, port=port, db=db, portable=portable)
     mode_label = "USB ZERO-TRACE PORTABLE" if (is_portable_mode() if portable is None else portable) else "NORMAL SYSTEM"
-    print(f"Aegis Laptop Diagnostics [{mode_label}] running locally at: http://{host}:{port}")
+    print(f"Xflash Diagnostics [{mode_label}] running locally at: http://{host}:{port}")
     print("Press Ctrl+C to stop.")
 
     if open_browser:
