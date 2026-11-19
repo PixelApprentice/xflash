@@ -542,8 +542,8 @@ class RealAdapterTests(unittest.TestCase):
         session = backend.load("examples/sample_session.json")
 
         # Test save
-        msg = backend.save(session)
-        self.assertIn("saved", msg)
+        db_path = backend.save(session)
+        self.assertTrue(os.path.isfile(db_path))
 
         # Test export
         with tempfile.TemporaryDirectory() as td:
@@ -556,9 +556,11 @@ class RealAdapterTests(unittest.TestCase):
         hist = backend.history()
         self.assertIsInstance(hist, list)
 
-        # Test diff
-        diff_page = backend.diff("examples/sample_session.json", "examples/sample_session.json")
-        self.assertEqual(diff_page.id, "diff")
+        # Diff is intentionally not supported in RealBackend
+        from xflash.tui.backend import NotSupported
+        self.assertFalse(backend.supports("diff"))
+        with self.assertRaises(NotSupported):
+            backend.diff("examples/sample_session.json", "examples/sample_session.json")
 
     def test_real_backend_live_probe_battery_accuracy(self):
         """Live probe must calculate battery retention accurately from sysfs without sample data contamination."""

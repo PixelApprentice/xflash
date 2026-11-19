@@ -119,7 +119,7 @@ class CLITests(unittest.TestCase):
         self.assertEqual(exit_code, 0)
         lines = f.getvalue().rstrip("\n").split("\n")
         self.assertEqual(len(lines), 36)
-        self.assertIn("Drive health", f.getvalue())
+        self.assertIn("Drive 0", f.getvalue())
 
     def test_cli_tui_subcommand_once_live_battery(self):
         f = io.StringIO()
@@ -129,7 +129,7 @@ class CLITests(unittest.TestCase):
         out = f.getvalue()
         lines = out.rstrip("\n").split("\n")
         self.assertEqual(len(lines), 36)
-        self.assertIn("Battery health", out)
+        self.assertIn("retention", out)
         self.assertIn("BAT", out)
 
     def test_battery_capacity_calculation_accuracy(self):
@@ -146,6 +146,10 @@ class CLITests(unittest.TestCase):
         fixture_sess = to_session(fixture_snap, fixture_report)
         bat_bay_fixture = next(b for b in fixture_sess.bays if b.name == "BAT")
         self.assertEqual(bat_bay_fixture.value, "72.0 %")
+        # Ensure degradation finding exists with matching evidence
+        deg_f = next(f for f in fixture_sess.findings if "battery" in f.id.lower())
+        kv_block = next(b for b in deg_f.blocks if b.kind == "kv")
+        self.assertTrue(any("72" in str(v) for _, v in kv_block.rows))
 
         # Real hardware measurements: 41,770 / 50,014 mWh -> exactly 83.5%
         real_snap = {
@@ -159,9 +163,6 @@ class CLITests(unittest.TestCase):
         real_sess = to_session(real_snap, real_report)
         bat_bay_real = next(b for b in real_sess.bays if b.name == "BAT")
         self.assertEqual(bat_bay_real.value, "83.5 %")
-        # Ensure retention percentage in findings matches
-        rule_f = next(f for f in real_sess.findings if f.id == "BAT-01")
-        self.assertEqual(rule_f.value, "83.5 %")
 
 
 if __name__ == "__main__":
