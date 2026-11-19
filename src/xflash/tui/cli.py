@@ -38,6 +38,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--height", type=int)
     p.add_argument("--no-color", action="store_true")
     p.add_argument("--ascii", action="store_true", help="ASCII-only glyphs for legacy consoles")
+    p.add_argument("--lens", choices=["auto", "expert", "pixel"], default="auto", help="UI lens preference")
     return p
 
 
@@ -88,6 +89,7 @@ def main(argv: Optional[list] = None, backend: Optional[Backend] = None, stdout=
     if args.once is not None:
         size = (args.width or 120, args.height or 36)
         app = App(backend, theme, size)
+        app.lens_pref = getattr(args, "lens", "auto")
         _snapshot(app, args.once, backend, args)
         print("\n".join(app.render()), file=out)
         return 0
@@ -96,6 +98,7 @@ def main(argv: Optional[list] = None, backend: Optional[Backend] = None, stdout=
         print("xflash tui needs an interactive terminal. Use --plain for piped output.", file=sys.stderr)
         return 2
     app = App(backend, theme)
+    app.lens_pref = getattr(args, "lens", "auto")
     if session_ref:
         app.set_session(backend.load(session_ref), "home")
     else:

@@ -192,33 +192,20 @@ def _run_scan_command(args: argparse.Namespace) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
+    argv = list(sys.argv[1:] if argv is None else argv)
+
+    # `xflash [--portable] tui ...`: the TUI owns its own flags, so give it everything after `tui`.
+    for i, token in enumerate(argv):
+        if token == "tui":
+            from .tui import main as tui_main
+            return tui_main(argv[i + 1:] + (["--portable"] if "--portable" in argv[:i] else []))
+        if not token.startswith("-"):
+            break
+
     args = build_parser().parse_args(argv)
 
     is_portable = getattr(args, "portable", False)
     no_browser = getattr(args, "no_browser", False)
-
-    if args.subcommand == "tui":
-        # Pass remaining argv through to the TUI's own parser
-        from .tui.cli import main as _tui_main
-        # Reconstruct argv from known tui flags
-        tui_argv = []
-        if getattr(args, "snapshot", None):
-            tui_argv.append(str(args.snapshot))
-        if getattr(args, "session", None):
-            tui_argv += ["--session", str(args.session)]
-        if getattr(args, "plain", False):
-            tui_argv.append("--plain")
-        if getattr(args, "once", None) is not None:
-            tui_argv += ["--once", args.once]
-        if getattr(args, "width", None):
-            tui_argv += ["--width", str(args.width)]
-        if getattr(args, "height", None):
-            tui_argv += ["--height", str(args.height)]
-        if getattr(args, "no_color", False):
-            tui_argv.append("--no-color")
-        if getattr(args, "ascii", False):
-            tui_argv.append("--ascii")
-        return _tui_main(tui_argv)
 
     if args.subcommand in ("scan", "inspect", "check"):
         return _run_scan_command(args)
