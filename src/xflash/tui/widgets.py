@@ -4,10 +4,12 @@ from __future__ import annotations
 import re
 from typing import Callable
 
-from .model import Bars, Block, Chart, Grid, Hist, Keycaps, KV, Lines, Page, Status
+from .model import Bars, Block, Chart, Grid, Hero, Hist, Keycaps, KV, Lines, Page, Stats, Card, Status
 from .theme import ANSI_RE, RST, Theme
 
 _ESC_SPLIT = re.compile(r"(\x1b\[[0-9;?]*[A-Za-z])")
+
+PIXEL_RENDERERS: dict = {}   # filled by pixel.py at import time
 
 
 def strip(s: str) -> str:
@@ -164,12 +166,16 @@ def r_chart(th: Theme, b: Chart, w: int) -> list:
 
 
 def r_bars(th: Theme, b: Bars, w: int) -> list:
-    role = b.rows[0][3] if b.rows else "w"
+    role = b.rows[0][3] if (b.rows and len(b.rows[0]) > 3) else "w"
     out = [header(th, b.title, b.sub, role or "w")]
     lw = max((len(str(r[0])) for r in b.rows), default=0)
     bw = clamp(w - lw - 14, 8, 22)
-    for label, frac, text, rrole in b.rows:
+    for row in b.rows:
+        label, frac, text = row[0], row[1], row[2]
+        rrole = row[3] if len(row) > 3 else "t2"
         out.append(f"{pad(str(label), lw)} {bar(th, float(frac), bw, rrole or 't2')}  {text}")
+    if getattr(b, "footer", ""):
+        out.append(th.paint("t3", b.footer))
     return out
 
 
@@ -218,8 +224,29 @@ def r_lines(th: Theme, b: Lines, w: int) -> list:
     return out + [th.paint("t3", str(x)) for x in b.lines]
 
 
+def r_hero(th: Theme, b: "Hero", w: int) -> list:
+    return [header(th, f"{b.title}: {b.value}" if b.title else b.value)]
+
+
+def r_stats(th: Theme, b: "Stats", w: int) -> list:
+    out = [header(th, b.title)] if b.title else []
+    lw = max((len(str(label)) for label, _, _ in b.items), default=0)
+    for label, value, role in b.items:
+        out.append(th.paint("t3", pad(str(label), lw)) + "  " + th.paint(role or "t", str(value)))
+    return out
+
+
+def r_card(th: Theme, b: "Card", w: int) -> list:
+    out = [header(th, b.title)] if b.title else []
+    for label, text, role in b.items:
+        out.append(th.paint("t3", str(label) + ":"))
+        out.append("  " + th.paint(role or "t", str(text)))
+    return out
+
+
 RENDERERS: dict = {"kv": r_kv, "chart": r_chart, "bars": r_bars, "hist": r_hist,
-                   "grid": r_grid, "keycaps": r_keycaps, "lines": r_lines}
+                   "grid": r_grid, "keycaps": r_keycaps, "lines": r_lines,
+                   "hero": r_hero, "stats": r_stats, "card": r_card}
 
 
 def register_block(kind: str, renderer: Callable) -> None:
@@ -235,10 +262,15 @@ def render_block(th: Theme, b: Block, w: int) -> list:
         return [th.paint("c", f"! cannot draw '{getattr(b, 'title', '?')}': {type(e).__name__}: {e}")]
 
 
-def render_blocks(th: Theme, blocks: list, w: int) -> list:
+def render_blocks(th: Theme, blocks: list, w: int, lens: str = "expert", tick: int = 0) -> list:
     out = []
     for b in blocks:
-        out += render_block(th, b, w) + [""]
+        renderer = PIXEL_RENDERERS.get(b.kind) if lens == "pixel" else None
+        if renderer:
+            out += renderer(th, b, w, tick)
+        else:
+            out += render_block(th, b, w)
+        out.append("")
     return out[:-1] if out else out
 
 

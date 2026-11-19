@@ -99,3 +99,14 @@ class Theme:
         if self.unicode:
             return s
         return s.translate(_TRANSLIT).encode("ascii", "replace").decode("ascii")
+
+    def paint2(self, top_role: str, bot_role: str, ch: str) -> str:
+        """Half-block pixel rendering: top colour as foreground, bottom as background."""
+        if self.color == "none":
+            return ch
+        if self.color == "truecolor":
+            tr, br = PALETTE.get(top_role, PALETTE["t"]), PALETTE.get(bot_role, PALETTE["t"])
+            code = f"38;2;{';'.join(map(str, tr))};48;2;{';'.join(map(str, br))}"
+        else:
+            code = f"{_BASIC.get(top_role, 97)};{_BASIC.get(bot_role, 97)};7"
+        return f"\x1b[{code}m{ch}{RST}"
