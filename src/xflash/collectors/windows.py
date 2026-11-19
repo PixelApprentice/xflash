@@ -20,7 +20,7 @@ def _run_ps_json(cmd: str, timeout: float = 6.0, executor: Callable[[list[str], 
     full_cmd = f"$ProgressPreference = 'SilentlyContinue'; try {{ {cmd} | ConvertTo-Json -Compress -Depth 4 }} catch {{ '' }}"
     args = ["powershell.exe", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command", full_cmd]
     res = exec_fn(args, timeout)
-    if res.returncode == 0 and res.stdout.strip():
+    if res and getattr(res, "returncode", 1) == 0 and getattr(res, "stdout", None) and res.stdout.strip():
         try:
             return json.loads(res.stdout)
         except json.JSONDecodeError:
@@ -61,13 +61,46 @@ class WindowsCollector:
 
         is_charging = status_code in (2, 6, 7, 8) if status_code is not None else None
 
+        status_map = {
+            1: "Discharging",
+            2: "Not charging",
+            3: "Full",
+            4: "Low",
+            5: "Critical",
+            6: "Charging",
+            7: "Charging",
+            8: "Charging",
+            9: "Charging",
+            10: "Unknown",
+            11: "Partially charged",
+        }
+        status_str = status_map.get(status_code, "Unknown" if status_code is None else f"Status {status_code}")
+        if is_charging and status_code in (6, 7, 8, 9):
+            status_str = "Charging"
+
+        cycles = None
+        cycle_data = self._ps("Get-CimInstance -Namespace root/wmi -ClassName BatteryCycleCount -ErrorAction SilentlyContinue | Select-Object CycleCount")
+        if cycle_data:
+            item_c = cycle_data[0] if isinstance(cycle_data, list) else cycle_data
+            raw_c = item_c.get("CycleCount")
+            if raw_c is not None and isinstance(raw_c, (int, float)) and raw_c >= 0:
+                cycles = int(raw_c)
+        if cycles is None:
+            cycle_data = self._ps("Get-CimInstance -Namespace root/wmi -ClassName BatteryStaticData -ErrorAction SilentlyContinue | Select-Object CycleCount")
+            if cycle_data:
+                item_c = cycle_data[0] if isinstance(cycle_data, list) else cycle_data
+                raw_c = item_c.get("CycleCount")
+                if raw_c is not None and isinstance(raw_c, (int, float)) and raw_c >= 0:
+                    cycles = int(raw_c)
+
         return {
             "health_pct": health_pct,
-            "cycle_count": None,  # Win32_Battery does not expose cycle count directly
+            "cycle_count": cycles,
             "full_charge_capacity_mwh": full_mwh,
             "design_capacity_mwh": design_mwh,
             "charge_percentage": charge_pct,
             "is_charging": is_charging,
+            "status": status_str,
             "technology": "Li-ion",
             "model": item.get("Name") or item.get("DeviceID"),
             "source": "windows-cim:Win32_Battery",
@@ -133,31 +166,83 @@ class WindowsCollector:
 
     def collect_storage(self) -> dict[str, Any]:
         """Collect storage disk drives, media types, and capacity."""
-        disks = self._ps("Get-CimInstance Win32_DiskDrive | Select-Object Model, Size, MediaType, InterfaceType, Partitions")
+        disks = self._ps("Get-CimInstance Win32_DiskDrive | Select-Object Model, Size, MediaType, InterfaceType, Partitions, DeviceID")
         disk_list = disks if isinstance(disks, list) else ([disks] if disks else [])
 
         total_bytes = 0
         primary_model = "Storage Drive"
         bus_type = "NVMe/SATA"
 
-        for d in disk_list:
+        # Attempt to query MSFT_StorageReliabilityCounter for SMART/NVMe metrics if available
+        reliability_data = self._ps(
+            "Get-CimInstance -Namespace root/Microsoft/Windows/Storage -ClassName MSFT_StorageReliabilityCounter -ErrorAction SilentlyContinue | Select-Object DeviceId, Temperature, PowerOnHours, ReadErrorsTotal, WriteErrorsTotal, Wear"
+        )
+        rel_map = {}
+        if reliability_data:
+            rel_items = reliability_data if isinstance(reliability_data, list) else [reliability_data]
+            for r in rel_items:
+                if isinstance(r, dict) and r.get("DeviceId") is not None:
+                    rel_map[str(r.get("DeviceId"))] = r
+
+        device_list: list[dict[str, Any]] = []
+        for i, d in enumerate(disk_list):
             if isinstance(d, dict):
                 size = d.get("Size")
-                if size:
-                    total_bytes += int(size)
+                size_bytes = int(size) if size else 0
+                if size_bytes:
+                    total_bytes += size_bytes
+                model = d.get("Model") or primary_model
                 if not primary_model or primary_model == "Storage Drive":
-                    primary_model = d.get("Model") or primary_model
+                    primary_model = model
                 if d.get("InterfaceType"):
                     bus_type = d.get("InterfaceType")
+
+                bus_lower = (d.get("InterfaceType") or "storage").lower()
+                model_lower = model.lower()
+                proto = "nvme" if ("nvme" in bus_lower or "nvme" in model_lower) else (
+                    "sata" if ("sata" in bus_lower or "sata" in model_lower or "ide" in bus_lower) else "storage"
+                )
+
+                dev_id = str(d.get("DeviceID") or f"PhysicalDrive{i}")
+                rel = rel_map.get(str(i)) or (rel_map.get(dev_id.split("PHYSICALDRIVE")[-1]) if "PHYSICALDRIVE" in dev_id else None)
+
+                used_pct = None
+                poh = None
+                temp_c = None
+                errs = 0
+                if rel:
+                    if rel.get("Wear") is not None and isinstance(rel.get("Wear"), (int, float)):
+                        used_pct = int(rel.get("Wear"))
+                    if rel.get("PowerOnHours") is not None and isinstance(rel.get("PowerOnHours"), (int, float)):
+                        poh = int(rel.get("PowerOnHours"))
+                    if rel.get("Temperature") is not None and isinstance(rel.get("Temperature"), (int, float)):
+                        temp_c = int(rel.get("Temperature"))
+                    errs = int(rel.get("ReadErrorsTotal") or 0) + int(rel.get("WriteErrorsTotal") or 0)
+
+                device_list.append({
+                    "model": model,
+                    "device_node": dev_id,
+                    "capacity_bytes": size_bytes,
+                    "protocol": proto,
+                    "source": "windows-cim:Win32_DiskDrive",
+                    "nvme_percentage_used": used_pct,
+                    "nvme_critical_warning": 0,
+                    "media_errors": errs,
+                    "power_on_hours": poh,
+                    "available_spare": (100 - used_pct) if used_pct is not None else 100,
+                    "temperature_c": temp_c,
+                    "self_test_status": "clean",
+                })
 
         cap_gb = round(total_bytes / (1000 ** 3), 1) if total_bytes > 0 else None
 
         return {
+            "devices": device_list,
             "model": primary_model,
             "capacity_gb": cap_gb,
             "bus_type": bus_type,
-            "percentage_used": None,
-            "media_errors": 0,
+            "percentage_used": device_list[0].get("nvme_percentage_used") if device_list else None,
+            "media_errors": device_list[0].get("media_errors") if device_list else 0,
             "source": "windows-cim:Win32_DiskDrive",
         }
 
@@ -267,6 +352,27 @@ class WindowsCollector:
             "source": "windows-cim:Win32_NetworkAdapter",
         }
 
+    def collect_ac_adapter(self) -> dict[str, Any]:
+        """Collect AC mains charging status."""
+        online = None
+        bs = self._ps("Get-CimInstance -Namespace root/wmi -ClassName BatteryStatus -ErrorAction SilentlyContinue | Select-Object PowerOnline")
+        if bs:
+            item = bs[0] if isinstance(bs, list) else bs
+            if "PowerOnline" in item:
+                online = bool(item.get("PowerOnline"))
+        if online is None:
+            bat = self._ps("Get-CimInstance Win32_Battery -ErrorAction SilentlyContinue | Select-Object BatteryStatus")
+            if bat:
+                item = bat[0] if isinstance(bat, list) else bat
+                sc = item.get("BatteryStatus")
+                online = sc in (2, 6, 7, 8) if sc is not None else None
+        return {
+            "name": "AC Adapter",
+            "online": online,
+            "wattage_w": None,
+            "source": "windows-wmi:BatteryStatus",
+        }
+
     def collect_display(self) -> dict[str, Any]:
         """Collect display panel and resolution specs."""
         disp = self._ps("Get-CimInstance Win32_VideoController | Select-Object CurrentHorizontalResolution, CurrentVerticalResolution, CurrentRefreshRate")
@@ -276,11 +382,36 @@ class WindowsCollector:
         height = item.get("CurrentVerticalResolution") or 1080
         hz = item.get("CurrentRefreshRate") or 60
 
+        # Query WmiMonitorID for monitor manufacturer and model if available
+        edid_data: dict[str, Any] = {}
+        mon = self._ps("Get-CimInstance -Namespace root/wmi -ClassName WmiMonitorID -ErrorAction SilentlyContinue | Select-Object ManufacturerName, UserFriendlyName")
+        if mon:
+            m_item = mon[0] if isinstance(mon, list) else mon
+            raw_mfg = m_item.get("ManufacturerName")
+            raw_model = m_item.get("UserFriendlyName")
+            mfg = "".join(chr(c) for c in raw_mfg if isinstance(c, int) and 32 <= c <= 126).strip() if raw_mfg else ""
+            model = "".join(chr(c) for c in raw_model if isinstance(c, int) and 32 <= c <= 126).strip() if raw_model else ""
+            if mfg or model:
+                edid_data["manufacturer"] = mfg or "Display"
+                edid_data["model_name"] = model or "Panel"
+
+        # Query WmiMonitorBasicDisplayParams for diagonal screen size if available
+        params = self._ps("Get-CimInstance -Namespace root/wmi -ClassName WmiMonitorBasicDisplayParams -ErrorAction SilentlyContinue | Select-Object MaxHorizontalImageSize, MaxVerticalImageSize")
+        if params:
+            p_item = params[0] if isinstance(params, list) else params
+            w_cm = p_item.get("MaxHorizontalImageSize")
+            h_cm = p_item.get("MaxVerticalImageSize")
+            if w_cm and h_cm and w_cm > 0 and h_cm > 0:
+                diag_cm = (w_cm ** 2 + h_cm ** 2) ** 0.5
+                edid_data["diagonal_inches"] = round(diag_cm / 2.54, 1)
+
         return {
             "width_px": width,
             "height_px": height,
             "resolution": f"{width}x{height}",
             "refresh_rate_hz": hz,
+            "edid": edid_data,
+            "panel_type": "OLED" if "oled" in str(edid_data.get("model_name", "")).lower() else "LCD",
             "source": "windows-cim:Win32_VideoController",
         }
 
@@ -350,6 +481,7 @@ class WindowsCollector:
             "cpu": self.collect_cpu(),
             "memory": self.collect_memory(),
             "storage": self.collect_storage(),
+            "ac_adapter": self.collect_ac_adapter(),
             "thermals": self.collect_thermals(),
             "display": self.collect_display(),
             "ports": self.collect_ports(),

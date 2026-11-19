@@ -76,6 +76,11 @@ def _snapshot(app: App, name: str, backend: Backend, args) -> None:
 def main(argv: Optional[list] = None, backend: Optional[Backend] = None, stdout=None) -> int:
     args = build_parser().parse_args(argv)
     out = stdout or sys.stdout
+    if hasattr(out, "reconfigure"):
+        try:
+            out.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:
+            pass
     backend = backend or default_backend()
     theme = Theme.detect(out, no_color=args.no_color, ascii_only=args.ascii)
     session_ref = getattr(args, "session", None) or getattr(args, "snapshot", None)

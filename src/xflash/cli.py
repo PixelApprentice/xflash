@@ -192,6 +192,15 @@ def _run_scan_command(args: argparse.Namespace) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
+    if sys.platform == "win32":
+        try:
+            if hasattr(sys.stdout, "reconfigure"):
+                sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+            if hasattr(sys.stderr, "reconfigure"):
+                sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:
+            pass
+
     argv = list(sys.argv[1:] if argv is None else argv)
 
     # `xflash [--portable] tui ...`: the TUI owns its own flags, so give it everything after `tui`.

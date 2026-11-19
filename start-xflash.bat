@@ -98,6 +98,13 @@ exit /b 1
 
 :Launch
 echo [Xflash] Found Python interpreter: !PY_CMD!
+
+:: If command-line argument is passed (e.g. tui, scan, diff), run directly in console
+if not "%~1"=="" if not "%~1"=="--lite" (
+    !PY_CMD! -m xflash.cli %*
+    exit /b !ERRORLEVEL!
+)
+
 echo [Xflash] Starting zero-trace portable diagnostics on http://127.0.0.1:8080 ...
 start "" !PY_CMD! -m xflash.cli serve --portable
 timeout /t 2 /nobreak >nul

@@ -62,12 +62,13 @@ class Terminal:
         self.stdin = stdin or sys.stdin
         self.stdout = stdout or sys.stdout
         self._old = None
+        self._old_windows_mode = None
         self._prev: list = []
         self._size = (0, 0)
 
     def __enter__(self):
         if os.name == "nt":
-            self._enable_windows_vt()
+            self._old_windows_mode = self._enable_windows_vt()
         else:
             import termios
             import tty
@@ -86,6 +87,14 @@ class Terminal:
         if self._old is not None:
             import termios
             termios.tcsetattr(self._fd, termios.TCSADRAIN, self._old)
+        if self._old_windows_mode is not None:
+            try:
+                import ctypes
+                k = ctypes.windll.kernel32
+                h = k.GetStdHandle(-11)
+                k.SetConsoleMode(h, self._old_windows_mode)
+            except Exception:
+                pass
         return False
 
     @staticmethod
@@ -96,9 +105,12 @@ class Terminal:
             h = k.GetStdHandle(-11)
             mode = ctypes.c_uint32()
             if k.GetConsoleMode(h, ctypes.byref(mode)):
-                k.SetConsoleMode(h, mode.value | 0x0004)   # ENABLE_VIRTUAL_TERMINAL_PROCESSING
+                old_val = mode.value
+                k.SetConsoleMode(h, old_val | 0x0004)   # ENABLE_VIRTUAL_TERMINAL_PROCESSING
+                return old_val
         except Exception:  # noqa: BLE001
             pass
+        return None
 
     def write(self, s: str):
         self.stdout.write(s)
@@ -131,9 +143,18 @@ class Terminal:
                 if msvcrt.kbhit():
                     ch = msvcrt.getwch()
                     if ch in ("\x00", "\xe0"):
-                        name = _WIN_KEYS.get(msvcrt.getwch())
+                        sc = msvcrt.getwch()
+                        name = _WIN_KEYS.get(sc)
                         return [name] if name else []
-                    return ["esc" if ch == "\x1b" else char_key(ch)]
+                    if ch == "\x1b":
+                        seq = "\x1b"
+                        while msvcrt.kbhit():
+                            seq += msvcrt.getwch()
+                        if len(seq) > 1:
+                            keys = parse_keys(seq.encode("utf-8"))
+                            return keys if keys else ["esc"]
+                        return ["esc"]
+                    return [char_key(ch)]
                 if time.monotonic() >= end:
                     return []
                 time.sleep(0.01)

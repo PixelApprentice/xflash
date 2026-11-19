@@ -634,5 +634,43 @@ class PtyTests(unittest.TestCase):
         self.assertIn(b"\x1b[?25h", buf, "cursor should be restored")
 
 
+class WindowsTerminalTests(unittest.TestCase):
+    def test_windows_key_mapping(self):
+        from xflash.tui.term import _WIN_KEYS, char_key
+        self.assertEqual(_WIN_KEYS.get("H"), "up")
+        self.assertEqual(_WIN_KEYS.get("P"), "down")
+        self.assertEqual(_WIN_KEYS.get("K"), "left")
+        self.assertEqual(_WIN_KEYS.get("M"), "right")
+        self.assertEqual(_WIN_KEYS.get("G"), "home")
+        self.assertEqual(_WIN_KEYS.get("O"), "end")
+        self.assertEqual(_WIN_KEYS.get("S"), "delete")
+        self.assertEqual(char_key("\r"), "enter")
+        self.assertEqual(char_key("\n"), "enter")
+        self.assertEqual(char_key("\x08"), "backspace")
+
+    def test_windows_poll_emulation(self):
+        from unittest.mock import patch, MagicMock
+        from xflash.tui.term import Terminal
+
+        t = Terminal()
+        mock_msvcrt = MagicMock()
+        mock_msvcrt.kbhit.side_effect = [True, False]
+        mock_msvcrt.getwch.return_value = "q"
+
+        with patch("os.name", "nt"), patch.dict("sys.modules", {"msvcrt": mock_msvcrt}):
+            keys = t.poll(0.01)
+            self.assertEqual(keys, ["q"])
+
+    def test_windows_theme_wt_session_and_utf8(self):
+        from xflash.tui.theme import Theme
+        env = {"WT_SESSION": "12345-abc", "TERM": "xterm-256color"}
+        th = Theme.detect(no_color=False, ascii_only=False, env=env)
+        self.assertEqual(th.color, "truecolor")
+        self.assertTrue(th.unicode)
+
+        th_ascii = Theme.detect(no_color=False, ascii_only=True, env=env)
+        self.assertFalse(th_ascii.unicode)
+
+
 if __name__ == "__main__":
     unittest.main()
