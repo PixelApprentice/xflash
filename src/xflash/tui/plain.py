@@ -15,9 +15,11 @@ def render_plain(th: Theme, s: Session) -> str:
     c = {"fail": 0, "warn": 0, "open": 0, "pass": 0}
     for f in s.findings:
         c[f.status.bucket] += 1
-    lines = [f"xflash · offline · read only · {s.title}",
-             dim(f"{pad('BAY', 4)} {pad('VALUE', bw)} STATUS"),
-             dim(th.g["h"] * (4 + bw + 9))]
+    lines = [f"xflash · offline · read only · {s.title}"]
+    if getattr(s, "verdict", ""):
+        lines.append(dim(f"VERDICT  {s.verdict}"))
+    lines += [dim(f"{pad('BAY', 4)} {pad('VALUE', bw)} STATUS"),
+              dim(th.g["h"] * (4 + bw + 9))]
     lines += [f"{pad(b.name, 4)} {pad(b.plain or b.value, bw)} {word(b.status)}" for b in s.bays]
     lines.append(dim("RULES"))
     for f in s.findings:
