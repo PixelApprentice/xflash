@@ -16,6 +16,11 @@ from .screens import SCREENS
 from .theme import Theme
 from .widgets import bar, clamp, clip, pad, spark, stext, vlen
 
+try:
+    from . import pscreens as _pscreens  # noqa: F401 — registers pixel screens
+except ImportError:
+    pass
+
 
 @dataclass
 class Command:
@@ -48,6 +53,7 @@ class App:
     def __init__(self, backend: Backend, theme: Theme, size: tuple = (120, 36)):
         self.backend, self.th, self.size = backend, theme, size
         self.session: Optional[Session] = None
+        self.lens_pref: str = "auto"   # "auto" | "expert" | "pixel"
         self.screen, self.page_id = "home", ""
         self.bay = self.sel = self.pal = self.tick = 0
         self.filter = self.buf = self.msg = ""
@@ -62,6 +68,15 @@ class App:
         self.history = self._safe(backend.history, [])
         self.commands: list = []
         _default_commands(self)
+
+    @property
+    def lens(self) -> str:
+        if self.lens_pref == "expert":
+            return "expert"
+        if self.lens_pref == "pixel":
+            return "pixel"
+        W, H = self.size
+        return "pixel" if W >= 120 and H >= 34 else "expert"
 
     # ───────────────────────── plumbing
     @staticmethod
@@ -329,6 +344,12 @@ class App:
 
     # ───────────────────────── rendering (pure given state)
     def _strip(self, W: int) -> list:
+        if self.lens == "pixel":
+            try:
+                from .pscreens import banner
+                return banner(self, W)
+            except ImportError:
+                pass
         th, g, bays = self.th, self.th.g, self.bays()
         D = lambda s: th.paint("ls", s)  # noqa: E731
         nb = len(bays)
@@ -427,7 +448,12 @@ class App:
         strip = self._strip(W)
         hb = max(4, H - len(strip) - 3)
         try:
-            body = SCREENS[self.screen](self, W - 4, hb)
+            from .screens import SCREENS, PIXEL_SCREENS
+            registry = PIXEL_SCREENS if self.lens == "pixel" else SCREENS
+            fn = registry.get(self.screen) or SCREENS.get(self.screen)
+            if fn is None:
+                raise KeyError(self.screen)
+            body = fn(self, W - 4, hb)
         except Exception as e:  # noqa: BLE001 - a failing screen must not end the session
             body = [th.paint("c", f"! screen '{self.screen}' failed: {type(e).__name__}: {e}")]
             self._debug_render()

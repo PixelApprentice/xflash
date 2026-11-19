@@ -17,11 +17,12 @@ from .widgets import r_chart  # noqa: F401  (re-exported for custom screens)
 from .model import Chart
 
 SCREENS: dict = {}
+PIXEL_SCREENS: dict = {}
 
 
-def screen(name: str) -> Callable:
+def screen(name: str, lens: str = "expert") -> Callable:
     def deco(fn):
-        SCREENS[name] = fn
+        (PIXEL_SCREENS if lens == "pixel" else SCREENS)[name] = fn
         return fn
     return deco
 
@@ -59,7 +60,11 @@ def rules(app, w, h):
     lw = min(54, w)
     stacked = w < lw + 46
     vw = clamp(max([4] + [len(f.value) for f in shown]), 4, 11)
-    left = [sec(th, "w", "RULES", f"{c['fail']} fail · {c['warn']} warn · {c['open']} open · {c['pass']} pass"), ""]
+    top_verdict = []
+    if app.session and app.session.verdict:
+        top_verdict = [th.chip(app.session.verdict_status.role, f" {app.session.verdict_status.word} ")
+                       + " " + th.paint("t", app.session.verdict)]
+    left = top_verdict + [sec(th, "w", "RULES", f"{c['fail']} fail · {c['warn']} warn · {c['open']} open · {c['pass']} pass"), ""]
     for i, f in enumerate(shown):
         nw = lw - 2 - 2 - 6 - 2 - vw - 1
         name = f.name if len(f.name) <= nw else f.name[:max(0, nw - 1)] + th.g["ell"]
