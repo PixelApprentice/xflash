@@ -127,10 +127,14 @@ def p_page(app, w, h):
     if not columns:
         return panel(th, [_dim(th, "this page has no content")], w)
     n = len(columns)
-    if n == 1:
-        widths = [w]
+    if n == 1 or w < 84:
+        all_blocks = [b for col in columns for b in col] if (n > 1 and w < 84) else columns[0]
+        lines = render_blocks(th, all_blocks, w - 4, "pixel", app.tick)
+        if p.rules_hint:
+            lines += ["", _dim(th, f"press r for the related finding ({p.rules_hint})")]
+        return panel(th, (lines + [""] * ph)[:ph], w, p.accent or "ls")
     elif n == 2:
-        lw = clamp(int(w * 0.58), 50, w - 48)
+        lw = max(40, min(w - 38, int(w * 0.52)))
         widths = [lw, w - lw - 1]
     else:
         widths = [(w - (n - 1)) // n] * n

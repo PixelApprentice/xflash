@@ -259,6 +259,39 @@ class CliTests(unittest.TestCase):
                 self.assertEqual(len(lines), 40)
                 self.assertTrue(all(vlen(x) <= 140 for x in lines))
 
+    def test_all_bay_pages_render_without_keyerror_in_pixel_lens(self):
+        snap, rep = fixture()
+        with patched():
+            b = RealBackend()
+            s = run_scan_blocking(b)
+            for color_mode in ("truecolor", "basic", "none"):
+                th = Theme(color=color_mode, unicode=True)
+                app = App(b, th, (110, 32))
+                app.set_session(s)
+                for bay in app.bays():
+                    if not bay.target:
+                        continue
+                    app.goto("page", bay.target)
+                    rendered = app.render()
+                    for line in rendered:
+                        self.assertNotIn("KeyError", line)
+                        self.assertNotIn("failed", line.lower())
+
+    def test_theme_ln_role_and_safe_role_fallbacks(self):
+        for color_mode in ("truecolor", "basic"):
+            th = Theme(color=color_mode, unicode=True)
+            # "ln" role must resolve cleanly
+            fg_ln = th._fg("ln")
+            self.assertTrue(bool(fg_ln))
+            paint_ln = th.paint("ln", "test")
+            self.assertIn("test", paint_ln)
+
+            # Unknown role must never raise KeyError
+            fg_unk = th._fg("non_existent_role")
+            self.assertTrue(bool(fg_unk))
+            chip_unk = th.chip("non_existent_role", "CHIP")
+            self.assertIn("CHIP", chip_unk)
+
 
 if __name__ == "__main__":
     unittest.main()

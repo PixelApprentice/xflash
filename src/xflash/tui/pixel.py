@@ -9,7 +9,7 @@ from __future__ import annotations
 import math
 from itertools import zip_longest
 
-from .model import Bars, Chart, Hero, KV, Stats, Status
+from .model import Bars, Card, Chart, Hero, KV, Stats, Status
 from .theme import Theme
 from .widgets import (PIXEL_RENDERERS, clamp, clip, glyph, header, pad, padl, resample, stext, vlen)
 
@@ -303,4 +303,22 @@ def p_chart(th: Theme, b: Chart, w: int, tick: int = 0) -> list:
     return [head] + pixel_chart(th, b.values, b.lo, b.hi, w, max(6, b.height + 3), b.role, b.x_left, b.x_right)
 
 
-PIXEL_RENDERERS.update({"hero": p_hero, "stats": p_stats, "bars": p_bars, "kv": p_kv, "chart": p_chart})
+def p_card(th: Theme, b: Card, w: int, tick: int = 0) -> list:
+    out = [th.paint("t2", b.title, bold=True)] if b.title else []
+    for label, text, role in b.items:
+        r = role or "t"
+        out.append(th.paint(r, f"▸ {label}:", bold=True))
+        words = str(text).split()
+        line = "   "
+        for word in words:
+            if len(line) + len(word) + 1 > max(12, w):
+                out.append(th.paint("t3" if r == "t" else r, line))
+                line = "   " + word
+            else:
+                line += (" " if line.strip() else "") + word
+        if line.strip():
+            out.append(th.paint("t3" if r == "t" else r, line))
+    return out
+
+
+PIXEL_RENDERERS.update({"hero": p_hero, "stats": p_stats, "bars": p_bars, "kv": p_kv, "chart": p_chart, "card": p_card})

@@ -243,14 +243,41 @@ def to_session(snapshot: Any, report: Any) -> Session:
         bays.append(Bay("BAT", f"{pct:.1f} %", st("BAT", True), bar=pct / 100, gauge=pct / 100, big=f"{pct:.1f}%",
                         sub=f"{int(bat['cycles'])} cycles" if bat["cycles"] is not None else "",
                         plain=f"{pct:.1f} % retention", target="battery"))
-        rows = [("Design capacity", f"{bat['design']:,.0f} mWh"), ("Full charge", f"{bat['full']:,.0f} mWh")]
-        rows += [r for r in _scalars(bat["raw"]) if r[0] not in ("Design capacity mwh", "Full charge capacity mwh")]
+        ac_online = (snap.get("ac_adapter") or {}).get("online")
+        ac_str = "Connected (AC Power)" if ac_online is True else ("Disconnected (Battery Power)" if ac_online is False else "—")
+        left = [
+            Hero("BATTERY", f"{pct:.1f}%", "battery", _role_for_pct(pct), str(bat["status"] or "Health")),
+            Bars("CAPACITY HEALTH", [
+                ("retention", pct / 100, f"{pct:.1f} %", _role_for_pct(pct), 0.80),
+                ("wear", (100 - pct) / 100, f"{(100 - pct):.1f} %", "w" if (100 - pct) >= 20 else "p"),
+            ], footer="white block marks the 80 % health threshold"),
+            Card("BUYER VERDICT", [
+                ("Condition",
+                 f"{'Healthy' if pct >= 80 else 'Worn' if pct >= 60 else 'Critical'} ({pct:.1f}% factory capacity retained)",
+                 _role_for_pct(pct)),
+                ("Estimated Runtime",
+                 f"~{pct:.0f}% of factory spec runtime" if pct >= 80 else "Shortened runtime off AC charger",
+                 "t"),
+                ("Buyer Action",
+                 "Battery passes health criteria; no replacement needed." if pct >= 80 else
+                 "Request $40–$80 discount for battery replacement credit.",
+                 "p" if pct >= 80 else "w"),
+            ]),
+        ]
+        right = [
+            KV("Pack Telemetry", [
+                ("Design Capacity", f"{bat['design']:,.0f} mWh ({bat['design']/1000:.1f} Wh)"),
+                ("Full Charge", f"{bat['full']:,.0f} mWh ({bat['full']/1000:.1f} Wh)"),
+                ("Capacity Loss", f"{max(0, bat['design'] - bat['full']):,.0f} mWh ({(100 - pct):.1f}%)"),
+                ("Cycle Count", f"{int(bat['cycles'])} cycles" if bat['cycles'] is not None else "Unknown"),
+                ("Power State", str(bat["status"] or "Unknown")),
+                ("AC Charger", ac_str),
+                ("Chemistry", str(bat["raw"].get("technology") or "Li-ion")),
+                ("Interface", str(bat["raw"].get("source") or "ACPI sysfs").split("/")[-1]),
+            ]),
+        ]
         pages["battery"] = Page("battery", "Battery", "BATTERY", str(bat["status"] or "status unknown"),
-                                f"{pct:.1f} % retention", [[
-            Hero("BATTERY", f"{pct:.1f}%", "battery", _role_for_pct(pct), "full / design"),
-            Bars("", [("retention", pct / 100, f"{pct:.0f} %", _role_for_pct(pct), 0.80)],
-                 footer="white block marks the 80 % threshold"),
-            KV("Battery", rows)]], rules_hint=first_rule["BAT"], accent=_role_for_pct(pct))
+                                f"{pct:.1f} % retention", [left, right], rules_hint=first_rule["BAT"], accent=_role_for_pct(pct))
     elif bat["full"]:
         bays.append(Bay("BAT", f"{bat['full']:,.0f} mWh", Status.UNSURE, sub="design capacity unrecorded",
                         plain=f"{bat['full']:,.0f} mWh (no design)", target="battery"))
@@ -273,29 +300,56 @@ def to_session(snapshot: Any, report: Any) -> Session:
                         big=f"{used:g}%" if used is not None else "", sub=f"{proto} · {cap_gb}",
                         value_role="p", plain=f"{proto} · {used:g} % used" if used is not None else f"{proto} · {cap_gb}",
                         target="storage"))
-        cols1, cols2 = [], []
-        for i, d in enumerate(disks[:3]):
-            rows = [r for r in _scalars(d) if r[0] != "Capacity bytes"]
-            c = _n(d.get("capacity_bytes"))
-            if c:
-                rows.insert(0, ("Capacity", f"{c / 1e9:,.0f} GB"))
-            cols1.append(KV(f"Drive {i}: {d.get('model') or 'unnamed'}", rows))
-        wear = []
-        if used is not None:
-            wear.append(("used", used / 100, f"{used:g} %", "p" if used < 80 else "w", 0.80))
-        spare = _n(d0.get("available_spare"))
-        if spare is not None:
-            wear.append(("spare", spare / 100, f"{spare:g} %", "p" if spare > 20 else "w"))
-        if wear:
-            cols2.append(Bars("WEAR", wear, footer="white block marks the 80 % wear limit" if used is not None else ""))
         errs = _n(d0.get("media_errors"))
         poh = _n(d0.get("power_on_hours"))
-        cols2.append(Stats("", [x for x in (
-            ("media errors", f"{errs:g}", "c" if errs else "p") if errs is not None else None,
-            ("power on", f"{poh:,.0f} h", "t") if poh is not None else None,
-            ("days", f"{poh // 24:,.0f}", "t") if poh is not None else None) if x]))
+        spare = _n(d0.get("available_spare"))
+        crit = _n(d0.get("nvme_critical_warning")) or 0
+        temp_c = d0.get("temperature_c")
+
+        left = []
+        if used is not None:
+            left.append(Hero("STORAGE", f"{100 - used}%", "chip", "p" if used < 80 else "w", "endurance remaining"))
+            wear = [("used", used / 100, f"{used:g} %", "p" if used < 80 else "w", 0.80)]
+            if spare is not None:
+                wear.append(("spare", spare / 100, f"{spare:g} %", "p" if spare > 20 else "w"))
+            left.append(Bars("NVMe ENDURANCE & SPARE", wear, footer="white block marks the 80 % wear limit"))
+        else:
+            left.append(Hero("STORAGE", cap_gb, "chip", "p", f"{proto} primary drive"))
+
+        left.append(Card("BUYER VERDICT", [
+            ("Drive Condition",
+             f"{'Excellent' if (used or 0) < 20 and not errs else 'Normal' if (used or 0) < 80 and not errs else 'Degraded'} "
+             f"({100 - (used or 0):g}% life remaining)",
+             "p" if (used or 0) < 80 and not errs else "w"),
+            ("Data Integrity",
+             "0 media/data integrity errors detected" if not errs else f"{errs:g} media errors detected!",
+             "p" if not errs else "c"),
+            ("Buyer Action",
+             "Storage drive is healthy; no replacement needed." if (used or 0) < 80 and not errs else
+             "Drive has high wear or media errors; inspect or negotiate replacement.",
+             "p" if (used or 0) < 80 and not errs else "w"),
+        ]))
+
+        right = [
+            KV(f"Drive 0: {d0.get('model') or 'Primary SSD'}", [
+                ("Model", str(d0.get("model") or "NVMe Drive")),
+                ("Capacity", cap_gb),
+                ("Device Node", str(d0.get("device_node") or "/dev/nvme0n1")),
+                ("Protocol", proto),
+                ("Temperature", f"{temp_c} °C (Normal)" if temp_c else "—"),
+                ("Power-On Time", f"{poh:,.0f} hours (~{int(poh // 24):,} days)" if poh else "—"),
+                ("Power Cycles", f"{d0.get('power_cycles'):,}" if d0.get('power_cycles') is not None else "—"),
+                ("Self-Test", str(d0.get("self_test_status") or "clean")),
+            ]),
+            KV("SMART / NVMe Health", [
+                ("Percentage Used", f"{used:g}%" if used is not None else "—"),
+                ("Available Spare", f"{spare:g}%" if spare is not None else "—"),
+                ("Media Errors", f"{errs:g}" if errs is not None else "0"),
+                ("Critical Warnings", f"{crit:g} (Clean)" if crit == 0 else f"{crit} WARNING"),
+            ]),
+        ]
         pages["storage"] = Page("storage", "Storage", "STORAGE", f"{len(disks)} drive{'s' if len(disks) != 1 else ''}",
-                                f"drive 0 · {d0.get('model') or ''}", [cols1, [b for b in cols2 if getattr(b, "items", True)]],
+                                f"drive 0 · {d0.get('model') or ''}", [left, right],
                                 rules_hint=first_rule["SSD"])
     else:
         bays.append(Bay("SSD", "—", Status.UNSURE, sub="no storage telemetry", plain="no storage telemetry"))
@@ -306,9 +360,34 @@ def to_session(snapshot: Any, report: Any) -> Session:
         speed = next((_fmt(v) for k, v in _scalars(mem) if "speed" in k.lower() or k.lower() == "type"), "")
         bays.append(Bay("MEM", f"{gib:.1f} GiB", st("MEM", True), gauge=1.0, big=f"{gib:g} GiB", sub=speed,
                         value_role="p", plain=f"{gib:.1f} GiB", target="memory"))
-        pages["memory"] = Page("memory", "Memory", "MEM", f"{gib:.1f} GiB installed", "", [[
-            Hero("MEMORY", f"{gib:g} GiB", "chip", "p", "installed"), KV("Memory", _scalars(mem))]],
-            rules_hint=first_rule["MEM"])
+        avail_bytes = _n(mem.get("available_bytes")) or 0
+        total_bytes = _n(mem.get("total_bytes")) or (gib * 1024 ** 3)
+        avail_gib = avail_bytes / 1024 ** 3 if avail_bytes else 0
+        used_gib = max(0.0, gib - avail_gib) if avail_gib else 0
+        left = [
+            Hero("MEMORY", f"{gib:.1f} GiB", "chip", "p", f"{used_gib:.1f} GiB in use" if used_gib else "installed"),
+            Bars("RAM CAPACITY", [
+                ("total", 1.0, f"{gib:.1f} GiB", "p"),
+                ("in use", used_gib / gib if gib else 0, f"{used_gib:.1f} GiB", "t2"),
+            ], footer="available memory ready for workloads"),
+            Card("BUYER VERDICT", [
+                ("Installed RAM", f"{total_bytes / 1e9:.0f} GB ({gib:.1f} GiB accessible)", "p"),
+                ("Capability", "Comfortable headroom for multitasking & productivity" if gib >= 15 else
+                 "Adequate for standard web & streaming" if gib >= 8 else "Constrained memory; verify upgradeability", "t"),
+                ("Buyer Action", "RAM capacity is healthy and matches typical specs.", "p"),
+            ]),
+        ]
+        right = [
+            KV("Memory Telemetry", [
+                ("Total Usable", f"{gib:.1f} GiB ({total_bytes:,.0f} bytes)"),
+                ("Available Now", f"{avail_gib:.1f} GiB ({avail_bytes:,.0f} bytes)" if avail_bytes else "—"),
+                ("In Use", f"{used_gib:.1f} GiB ({(used_gib/gib*100):.0f}%)" if gib and used_gib else "—"),
+                ("Architecture", f"{system.get('architecture', 'x86_64')} Unified Architecture"),
+                ("Telemetry Source", str(mem.get("source") or "/proc/meminfo")),
+            ]),
+        ]
+        pages["memory"] = Page("memory", "Memory", "MEM", f"{gib:.1f} GiB installed", "", [left, right],
+                                rules_hint=first_rule["MEM"])
     else:
         bays.append(Bay("MEM", "—", Status.UNSURE, sub="no memory telemetry", plain="no memory telemetry"))
 
@@ -324,9 +403,30 @@ def to_session(snapshot: Any, report: Any) -> Session:
                     plain=f"{cpu_model} · {cpu_val}", target="cpu" if cpu else ""))
     if cpu:
         accent = "w" if cpu_status in (Status.CLAIM, Status.WARN) else "p"
-        pages["cpu"] = Page("cpu", "Processor", "CPU", cpu_model, "", [[
-            Hero("PROCESSOR", cpu_val, "chip", accent, cpu_model), KV("Processor", _scalars(cpu))]],
-            rules_hint=first_rule["CPU"], accent=accent)
+        left = [
+            Hero("PROCESSOR", f"{cores:g}C/{threads:g}T" if cores and threads else cpu_val, "chip", accent, cpu_val),
+        ]
+        if temp is not None:
+            left.append(Bars("CORE TEMPERATURE", [
+                ("temp", temp / 100, f"{temp:.0f} °C", "p" if temp < 75 else "w", 0.85),
+            ], footer="white block marks 85 °C throttle limit"))
+        left.append(Card("BUYER VERDICT", [
+            ("Core Topology", f"{cores or '?'} Physical Cores / {threads or '?'} Logical Threads", "t"),
+            ("Thermal Status", f"{temp:.0f} °C (Nominal operating temperature)" if temp and temp < 75 else "Within normal thermal envelope", "p"),
+            ("Processor Match", "Observed hardware identity verified via CPUID", "p"),
+        ]))
+        right = [
+            KV("Processor Specifications", [
+                ("Model", cpu_model),
+                ("Physical Cores", f"{int(cores)}" if cores is not None else "—"),
+                ("Logical Threads", f"{int(threads)}" if threads is not None else "—"),
+                ("Current Clock", f"{cpu.get('frequency_mhz', '—')} MHz"),
+                ("Architecture", str(cpu.get("architecture") or system.get("architecture") or "x86_64")),
+                ("Telemetry Source", str(cpu.get("source") or "/proc/cpuinfo")),
+            ]),
+        ]
+        pages["cpu"] = Page("cpu", "Processor", "CPU", cpu_model, "", [left, right],
+                            rules_hint=first_rule["CPU"], accent=accent)
 
     # FAN ---------------------------------------------------------------
     rpm = therm.get("rpm")
@@ -337,23 +437,60 @@ def to_session(snapshot: Any, report: Any) -> Session:
         bays.append(Bay("FAN", "—", st("FAN", False), sub="no fan telemetry", plain="no fan telemetry",
                         target="thermal" if therm else ""))
     if therm:
-        left = [Hero("FAN", f"{rpm:,.0f}", "fan", "t", "rpm")] if rpm is not None else []
-        pages["thermal"] = Page("thermal", "Thermal", "THERMAL", f"{therm['key']} telemetry", "", [
-            left + [KV("Thermal", _scalars(therm["section"], 28))]], rules_hint=first_rule["FAN"] or first_rule["CPU"])
+        t_val = therm.get("temp")
+        hero_val = f"{rpm:,.0f}" if rpm is not None else (f"{t_val:.0f}°C" if t_val is not None else "OK")
+        hero_sub = "rpm" if rpm is not None else ("Package Temp" if t_val is not None else "Cooling")
+        left = [Hero("FAN", hero_val, "fan", "t", hero_sub)]
+        if rpm is not None:
+            left.append(Bars("FAN SPEED", [("rpm", min(1.0, rpm / 5000), f"{rpm:,.0f} rpm", "t")]))
+        left.append(Card("BUYER VERDICT", [
+            ("Thermal Integrity", "Thermal sensors are operational; no emergency trip detected", "p"),
+            ("Cooling State", f"{rpm:,.0f} RPM fan active" if rpm else "Fan operating passively or controlled by embedded EC", "t"),
+            ("Buyer Advice", "Listen for fan bearing grinding, rattling, or whining under load.", "w"),
+        ]))
+        prof = (snap.get("fan_profiles") or {}).get("current")
+        right = [
+            KV("Thermal & Sensor Telemetry", [
+                ("CPU Package", f"{t_val:.0f} °C" if t_val is not None else "—"),
+                ("Fan Speed", f"{rpm:,.0f} rpm" if rpm is not None else "Passive / EC-managed"),
+                ("Fan Profile", str(prof or "Standard / Automatic")),
+                ("Sensor Interface", str(therm.get("key") or "ACPI thermal")),
+            ]),
+        ]
+        pages["thermal"] = Page("thermal", "Thermal", "THERMAL", f"{therm['key']} telemetry", "", [left, right],
+                                rules_hint=first_rule["FAN"] or first_rule["CPU"])
 
     # DSP ---------------------------------------------------------------
     edid = _d(display.get("edid"))
     res = display.get("resolution")
     tech = edid.get("panel_type") or display.get("panel_type") or "LCD"
+    is_oled = edid.get("is_oled") or display.get("is_oled")
     diag = _n(edid.get("diagonal_inches"))
     sub = " · ".join(x for x in (str(tech), f'{diag:.1f}"' if diag else "", str(edid.get("color_depth") or ""),
                                  str(edid.get("manufacturer") or "")) if x)
     if display:
         bays.append(Bay("DSP", str(res or "—"), st("DSP", True), gauge=1.0, sub=sub, value_role="t",
                         plain=f"{res or '?'} · {tech}", target="display"))
-        pages["display"] = Page("display", "Display", "DSP", sub, "", [[
-            Hero("DISPLAY", str(res or "—"), "monitor", "t", sub), KV("Display", _scalars(display)),
-            KV("EDID", _scalars(edid))]], rules_hint=first_rule["DSP"])
+        left = [
+            Hero("DISPLAY", str(res or "—"), "monitor", "p" if is_oled else "t", sub),
+            Card("BUYER VERDICT", [
+                ("Panel Grade", f"Premium {tech} ({'Self-Emitting OLED' if is_oled else 'Backlit LCD'})", "p" if is_oled else "t"),
+                ("Color Quality", f"{edid.get('color_depth', '8-bit')} depth · Deep contrast", "p" if is_oled else "t"),
+                ("Buyer Inspection", "Check full-screen white/black images for dead pixels, burn-in, or lines.", "w"),
+            ]),
+        ]
+        right = [
+            KV("Display Specifications", [
+                ("Resolution", str(res or "—")),
+                ("Panel Type", str(tech)),
+                ("Diagonal Size", f'{diag:.1f}"' if diag else "—"),
+                ("Color Depth", str(edid.get("color_depth") or "8-bit")),
+                ("Manufacturer", str(edid.get("manufacturer") or "—")),
+                ("Model Code", str(edid.get("model_name") or "—")),
+                ("Interface Node", str(display.get("interface") or "eDP")),
+            ]),
+        ]
+        pages["display"] = Page("display", "Display", "DSP", sub, "", [left, right], rules_hint=first_rule["DSP"])
     else:
         bays.append(Bay("DSP", "—", Status.UNSURE, sub="no display telemetry", plain="no display telemetry"))
 

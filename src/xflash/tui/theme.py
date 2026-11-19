@@ -22,8 +22,9 @@ PALETTE = {
     "t2": (182, 180, 171),  # secondary text
     "t3": (155, 153, 143),  # dim text
     "ls": (114, 118, 122),  # lines
+    "ln": (60, 64, 68),     # dark/inactive gauge lines & blocks
 }
-_BASIC = {"p": 32, "w": 33, "c": 31, "t": 97, "t2": 37, "t3": 90, "ls": 90}
+_BASIC = {"p": 32, "w": 33, "c": 31, "t": 97, "t2": 37, "t3": 90, "ls": 90, "ln": 90}
 _SELBG_TC, _SELBG_BASIC = "\x1b[48;2;46;50;54m", "\x1b[100m"
 
 UNI = dict(
@@ -70,7 +71,10 @@ class Theme:
 
     # -- colour ---------------------------------------------------------
     def _fg(self, role: str) -> str:
-        return f"38;2;{';'.join(map(str, PALETTE[role]))}" if self.color == "truecolor" else str(_BASIC[role])
+        if self.color == "truecolor":
+            rgb = PALETTE.get(role, PALETTE.get("ls", (114, 118, 122)))
+            return f"38;2;{';'.join(map(str, rgb))}"
+        return str(_BASIC.get(role, 90))
 
     def paint(self, role: str, text: str, bold: bool = False) -> str:
         if self.color == "none" or text == "":
@@ -81,9 +85,11 @@ class Theme:
         if self.color == "none":
             return f"[{text.strip()}]"
         if self.color == "truecolor":
-            code = f"48;2;{';'.join(map(str, PALETTE[role]))};38;2;17;19;21"
+            rgb = PALETTE.get(role, PALETTE.get("w", (242, 184, 75)))
+            code = f"48;2;{';'.join(map(str, rgb))};38;2;17;19;21"
         else:
-            code = f"{_BASIC[role]};7"
+            basic = _BASIC.get(role, 33)
+            code = f"{basic};7"
         return f"\x1b[{code}m{text}{RST}"
 
     def selected(self, text: str, width: int) -> str:
