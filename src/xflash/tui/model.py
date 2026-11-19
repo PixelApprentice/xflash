@@ -89,6 +89,8 @@ class Bars:
     title: str
     rows: list                      # [(label, fraction 0..1, text, role)]
     sub: str = ""
+    footer: str = ""
+    active: str = ""
     kind: str = "bars"
 
 
@@ -131,7 +133,31 @@ class Lines:
     kind: str = "lines"
 
 
-Block = Union[KV, Chart, Bars, Hist, Grid, Keycaps, Lines]
+@dataclass
+class Hero:
+    title: str
+    value: str
+    sprite: str = ""
+    role: str = "p"
+    sub: str = ""
+    kind: str = "hero"
+
+
+@dataclass
+class Stats:
+    title: str
+    items: list   # [(label, value, role)]
+    kind: str = "stats"
+
+
+@dataclass
+class Card:
+    title: str
+    items: list   # [(label, text, role)]
+    kind: str = "card"
+
+
+Block = Union[KV, Chart, Bars, Hist, Grid, Keycaps, Lines, Hero, Stats, Card]
 
 # ───────────────────────── session pieces
 
@@ -147,6 +173,11 @@ class Bay:
     plain: str = ""                 # text for --plain output
     target: str = ""                # "rules" or a Page id opened by the bay key
     rule: str = ""                  # finding id to preselect when target == "rules"
+    big: str = ""                   # large value for pixel tile (e.g. "72.0%")
+    gauge: Optional[float] = None   # 0..1 for the tile gauge strip
+    value_role: str = ""            # role override for the big value colour
+    sprite: str = ""                # sprite name override
+    note: str = ""                  # extra note shown in tile
 
 
 @dataclass
@@ -169,6 +200,9 @@ class Page:
     right: str = ""
     columns: list = field(default_factory=list)   # list of columns, each a list of Blocks
     note: str = ""
+    pixel_columns: list = field(default_factory=list)  # pixel-lens column layout
+    rules_hint: str = ""            # finding id to highlight when pressing r
+    accent: str = ""                # panel border role for right column
 
 
 @dataclass
@@ -188,6 +222,10 @@ class Session:
     machine: dict = field(default_factory=dict)
     pages: dict = field(default_factory=dict)
     report_path: str = ""
+    verdict: str = ""
+    verdict_status: "Status" = field(default_factory=lambda: Status.UNSURE)
+    verdict_note: str = ""
+    raw: object = None              # (snapshot, report) tuple kept by real.py
 
 
 @dataclass
