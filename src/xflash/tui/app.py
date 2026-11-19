@@ -71,12 +71,13 @@ class App:
 
     @property
     def lens(self) -> str:
+        if not self.th.unicode:
+            return "expert"
         if self.lens_pref == "expert":
             return "expert"
         if self.lens_pref == "pixel":
             return "pixel"
-        W, H = self.size
-        return "pixel" if W >= 120 and H >= 34 else "expert"
+        return "pixel"
 
     # ───────────────────────── plumbing
     @staticmethod
@@ -324,6 +325,14 @@ class App:
                 self.msg = "no session loaded, type :scan first"
         elif k == "?":
             self.help = not self.help
+        elif k == "r":
+            if self.session:
+                self.goto("rules")
+            else:
+                self.msg = "no session loaded, press s or type :scan"
+        elif k == "v":
+            self.lens_pref = "expert" if self.lens == "pixel" else "pixel"
+            self.msg = f"switched to {self.lens} lens"
         elif k == "s" and home:
             self.run_command("scan")
         elif k == "d" and home:
@@ -412,9 +421,9 @@ class App:
     def _hotkeys(self) -> str:
         th = self.th
         if self.screen == "home" and not self.session:
-            keys = [("s", "scan"), ("1-6", "bay"), (":", "command"), ("?", "help"), ("q", "quit")]
+            keys = [("s", "scan"), ("1-6", "bay"), ("v", "lens"), (":", "command"), ("?", "help"), ("q", "quit")]
         else:
-            keys = [("1-6", "bay"), ("j k", "move"), ("enter", "open"), ("/", "filter"), (":", "command"), ("?", "help")]
+            keys = [("1-6", "bay"), ("j k", "move"), ("r", "rules"), ("v", "lens"), ("/", "filter"), (":", "command"), ("?", "help")]
         return "  " + "  ".join(th.chip("t3", f" {k} ") + th.paint("t3", " " + t) for k, t in keys)
 
     def _box(self, title: str, lines: list, w: int) -> list:
@@ -429,7 +438,8 @@ class App:
         if self.help:
             return self._box("Keys", ["j k / ↑ ↓   move          1-6   open a bay        h l   pick a bay",
                                       "enter       open          /     filter rules      :     command palette",
-                                      "esc         back          ?     this help         q     quit"], w)
+                                      "r           rules         v     switch lens       s     scan",
+                                      "esc         back/home     ?     this help         q     quit"], w)
         if self.mode == "cmd":
             m = self.entries(self.buf)[:7]
             self.pal = clamp(self.pal, 0, max(0, len(m) - 1))

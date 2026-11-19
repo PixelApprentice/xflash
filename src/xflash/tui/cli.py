@@ -101,8 +101,6 @@ def main(argv: Optional[list] = None, backend: Optional[Backend] = None, stdout=
     app.lens_pref = getattr(args, "lens", "auto")
     if session_ref:
         app.set_session(backend.load(session_ref), "home")
-    else:
-        app.start_scan(ScanOptions())
     with Terminal() as term:
         app.run(term)
     return 0
